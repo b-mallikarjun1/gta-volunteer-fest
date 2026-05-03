@@ -21,33 +21,107 @@
       --primary-dark: #0a58ca;
       --success: #198754;
       --danger: #dc3545;
-      --bg: #f5f7fb;
+      --bg: #fff8ec;                 /* warm cream backdrop */
       --card: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
       --border: #e5e7eb;
       --radius: 12px;
       --shadow: 0 4px 14px rgba(0,0,0,0.08);
+      /* Indian festival accent palette */
+      --fest-red:      #c1272d;
+      --fest-saffron:  #ff6b35;
+      --fest-marigold: #f9b233;
+      --fest-gold:     #d4a437;
+      --fest-magenta:  #b53075;
+      --fest-cream:    #fff7e0;
     }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
+      background-color: var(--bg);
+      /* Subtle festival pattern: warm gold + faint red dots — keeps form cards perfectly readable */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Ccircle cx='22' cy='22' r='1.6' fill='%23d4a437' fill-opacity='0.18'/%3E%3Ccircle cx='22' cy='22' r='6' fill='none' stroke='%23d4a437' stroke-opacity='0.08' stroke-width='0.5'/%3E%3Ccircle cx='5' cy='5' r='1' fill='%23c1272d' fill-opacity='0.10'/%3E%3Ccircle cx='39' cy='39' r='1' fill='%23c1272d' fill-opacity='0.10'/%3E%3C/svg%3E");
       color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
+    /* ============ FESTIVAL BANNER ============ */
     header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      position: relative;
+      overflow: hidden;
       color: white;
-      padding: 24px 16px;
+      padding: 32px 16px 42px;
       text-align: center;
-      box-shadow: var(--shadow);
+      /* Mandala dot pattern overlay + multi-color festival gradient */
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2.2' fill='%23ffffff' fill-opacity='0.32'/%3E%3Ccircle cx='45' cy='45' r='12' fill='none' stroke='%23ffffff' stroke-opacity='0.16' stroke-width='0.7'/%3E%3Ccircle cx='45' cy='45' r='22' fill='none' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='0.5'/%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%23ffd166' fill-opacity='0.45'/%3E%3Ccircle cx='80' cy='80' r='1.5' fill='%23ffd166' fill-opacity='0.45'/%3E%3C/svg%3E"),
+        linear-gradient(135deg, #c1272d 0%, #e94e1b 28%, #ff6b35 50%, #f9b233 78%, #d4a437 100%);
+      background-size: 90px 90px, cover;
+      box-shadow: 0 6px 20px rgba(193, 39, 45, 0.28);
     }
-    header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.2px; }
-    header .subtitle { margin: 6px 0 0; opacity: 0.95; font-size: 15px; font-weight: 500; }
-    header .tagline { margin: 4px 0 0; opacity: 0.85; font-size: 13px; }
+    /* Torana — festive triangular bunting hanging at the bottom edge */
+    header::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 12px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='12' viewBox='0 0 28 12'%3E%3Cpath d='M0,0 L14,12 L28,0 Z' fill='%23d4a437'/%3E%3Ccircle cx='14' cy='10' r='1.6' fill='%23fff8ec'/%3E%3C/svg%3E");
+      background-size: 28px 12px;
+      background-repeat: repeat-x;
+    }
+    /* Bathukamma — stacked floral ornament from Telangana */
+    .bathukamma {
+      display: block;
+      margin: 0 auto 10px;
+      width: 92px;
+      height: auto;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+      animation: bathukamma-bob 5s ease-in-out infinite;
+    }
+    @keyframes bathukamma-bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bathukamma { animation: none; }
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.28);
+    }
+    header .subtitle {
+      margin: 8px 0 0;
+      opacity: 1;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--fest-cream);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.22);
+    }
+    /* Decorative stars framing the subtitle */
+    header .subtitle::before,
+    header .subtitle::after {
+      content: '✦';
+      color: #ffd166;
+      font-size: 11px;
+      vertical-align: 2px;
+      opacity: 0.9;
+      margin: 0 10px;
+    }
+    header .tagline {
+      margin: 10px 0 0;
+      opacity: 0.95;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
 
     main {
       max-width: 720px;
@@ -383,6 +457,90 @@
 </head>
 <body>
   <header>
+    <!-- Bathukamma: the traditional Telangana floral ornament, stacked tiers of seasonal flowers -->
+    <svg class="bathukamma" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" aria-label="Bathukamma — Telangana floral ornament" role="img">
+      <!-- Soft shadow under the plate -->
+      <ellipse cx="60" cy="144" rx="48" ry="3" fill="rgba(0,0,0,0.28)"/>
+
+      <!-- Decorative golden plate -->
+      <ellipse cx="60" cy="138" rx="50" ry="7" fill="#7a0c16"/>
+      <ellipse cx="60" cy="136" rx="50" ry="6" fill="#d4a437"/>
+      <ellipse cx="60" cy="135" rx="50" ry="4.5" fill="#fff8ec" opacity="0.45"/>
+      <ellipse cx="60" cy="138" rx="50" ry="6.5" fill="none" stroke="#8b0e1a" stroke-width="0.6"/>
+
+      <!-- Tier 1 (widest, base) — marigold band with orange marigolds -->
+      <ellipse cx="60" cy="128" rx="46" ry="9" fill="#d4a437"/>
+      <g fill="#ff8c42">
+        <circle cx="20" cy="126" r="3.2"/><circle cx="30" cy="130" r="3.2"/><circle cx="40" cy="127" r="3.2"/>
+        <circle cx="50" cy="130" r="3.2"/><circle cx="60" cy="127" r="3.2"/><circle cx="70" cy="130" r="3.2"/>
+        <circle cx="80" cy="127" r="3.2"/><circle cx="90" cy="130" r="3.2"/><circle cx="100" cy="126" r="3.2"/>
+      </g>
+      <g fill="#c1272d">
+        <circle cx="20" cy="126" r="1.2"/><circle cx="30" cy="130" r="1.2"/><circle cx="40" cy="127" r="1.2"/>
+        <circle cx="50" cy="130" r="1.2"/><circle cx="60" cy="127" r="1.2"/><circle cx="70" cy="130" r="1.2"/>
+        <circle cx="80" cy="127" r="1.2"/><circle cx="90" cy="130" r="1.2"/><circle cx="100" cy="126" r="1.2"/>
+      </g>
+
+      <!-- Tier 2 — deep red band with saffron flowers -->
+      <ellipse cx="60" cy="114" rx="40" ry="8" fill="#c1272d"/>
+      <g fill="#ff6b35">
+        <circle cx="25" cy="112" r="2.8"/><circle cx="35" cy="116" r="2.8"/><circle cx="45" cy="113" r="2.8"/>
+        <circle cx="55" cy="116" r="2.8"/><circle cx="65" cy="113" r="2.8"/><circle cx="75" cy="116" r="2.8"/>
+        <circle cx="85" cy="113" r="2.8"/><circle cx="95" cy="115" r="2.8"/>
+      </g>
+      <g fill="#ffd166">
+        <circle cx="25" cy="112" r="1"/><circle cx="35" cy="116" r="1"/><circle cx="45" cy="113" r="1"/>
+        <circle cx="55" cy="116" r="1"/><circle cx="65" cy="113" r="1"/><circle cx="75" cy="116" r="1"/>
+        <circle cx="85" cy="113" r="1"/><circle cx="95" cy="115" r="1"/>
+      </g>
+
+      <!-- Tier 3 — pink/magenta band with light-pink flowers -->
+      <ellipse cx="60" cy="100" rx="34" ry="7" fill="#b53075"/>
+      <g fill="#f4c0d1">
+        <circle cx="30" cy="99" r="2.5"/><circle cx="40" cy="102" r="2.5"/><circle cx="50" cy="99" r="2.5"/>
+        <circle cx="60" cy="102" r="2.5"/><circle cx="70" cy="99" r="2.5"/><circle cx="80" cy="102" r="2.5"/>
+        <circle cx="90" cy="99" r="2.5"/>
+      </g>
+
+      <!-- Tier 4 — saffron band with marigold flowers -->
+      <ellipse cx="60" cy="86" rx="28" ry="6" fill="#ff6b35"/>
+      <g fill="#f9b233">
+        <circle cx="36" cy="85" r="2.3"/><circle cx="46" cy="88" r="2.3"/><circle cx="56" cy="85" r="2.3"/>
+        <circle cx="66" cy="88" r="2.3"/><circle cx="76" cy="85" r="2.3"/><circle cx="84" cy="87" r="2.3"/>
+      </g>
+
+      <!-- Tier 5 — yellow band with red centers -->
+      <ellipse cx="60" cy="74" rx="22" ry="5" fill="#f9b233"/>
+      <g fill="#c1272d">
+        <circle cx="42" cy="73" r="1.8"/><circle cx="51" cy="75" r="1.8"/><circle cx="60" cy="73" r="1.8"/>
+        <circle cx="69" cy="75" r="1.8"/><circle cx="78" cy="73" r="1.8"/>
+      </g>
+
+      <!-- Tier 6 — red top band with golden dots -->
+      <ellipse cx="60" cy="63" rx="16" ry="4" fill="#c1272d"/>
+      <g fill="#ffd166">
+        <circle cx="48" cy="62" r="1.5"/><circle cx="55" cy="64" r="1.5"/><circle cx="60" cy="62" r="1.5"/>
+        <circle cx="65" cy="64" r="1.5"/><circle cx="72" cy="62" r="1.5"/>
+      </g>
+
+      <!-- Tier 7 (smallest) — golden ring -->
+      <ellipse cx="60" cy="55" rx="11" ry="3" fill="#d4a437"/>
+
+      <!-- Gowramma — turmeric figurine traditionally placed at the top -->
+      <ellipse cx="60" cy="46" rx="7" ry="7" fill="#f9b233"/>
+      <ellipse cx="60" cy="46" rx="7" ry="7" fill="none" stroke="#c1272d" stroke-width="0.7"/>
+      <circle cx="60" cy="43" r="2.5" fill="#c1272d"/>
+
+      <!-- Finial: gold spike + bright star at the very top -->
+      <line x1="60" y1="38" x2="60" y2="26" stroke="#d4a437" stroke-width="1.8"/>
+      <circle cx="60" cy="22" r="3" fill="#ffd166"/>
+      <circle cx="60" cy="22" r="1.4" fill="#c1272d"/>
+
+      <!-- Two small green leaves flanking the base -->
+      <path d="M14 130 Q8 124 12 117" stroke="#198754" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M106 130 Q112 124 108 117" stroke="#198754" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </svg>
+
     <h1>Global Telangana Association</h1>
     <p class="subtitle">GTA International Fest</p>
     <p class="tagline">Student Volunteer Registration</p>
