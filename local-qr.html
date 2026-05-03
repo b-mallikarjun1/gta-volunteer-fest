@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GTA Volunteer App — Local QR for Phone Testing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #f5f7fb 0%, #e0e7ff 100%);
+    color: #1f2937;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+
+  .info-card {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #78350f;
+  }
+  .info-card strong { color: #78350f; }
+
+  .qr-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .qr-card .label { font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .qr-card h1 { margin: 6px 0 4px; font-size: 22px; color: #0a58ca; }
+  .qr-card .sub { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+  #qrcode {
+    display: inline-block;
+    padding: 16px;
+    background: white;
+    border: 4px solid #0d6efd;
+    border-radius: 12px;
+  }
+  #qrcode canvas, #qrcode img { display: block; }
+
+  .url-box {
+    margin-top: 20px;
+    padding: 12px 14px;
+    background: #f5f7fb;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 14px;
+    color: #0a58ca;
+    word-break: break-all;
+    border: 1px dashed #cbd5e1;
+  }
+
+  .controls {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .controls h3 { margin: 0 0 12px; font-size: 15px; color: #0a58ca; }
+  .controls label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 600; }
+  .controls input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-family: monospace;
+  }
+  .controls button {
+    padding: 10px 18px;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+  .controls button:hover { background: #0a58ca; }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .step .num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    background: #0d6efd;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .step .text { font-size: 14px; line-height: 1.5; padding-top: 3px; }
+
+  .warning {
+    background: #fee2e2;
+    border-left: 4px solid #dc3545;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #991b1b;
+    margin-top: 16px;
+  }
+
+  @media print {
+    body { background: white; }
+    .controls, .info-card, .warning { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="info-card" id="hostWarning" style="display: none;">
+    <strong>⚠️ Heads up:</strong> You opened this page using <code>localhost</code>. The QR will point to <code>localhost</code> too — and phones won't be able to reach it. Re-open this page using your computer's <strong>LAN IP</strong> instead (see steps below).
+  </div>
+
+  <div class="qr-card">
+    <div class="label">Scan with your phone</div>
+    <h1>GTA Volunteer App</h1>
+    <div class="sub">Make sure your phone is on the same Wi-Fi as this computer</div>
+
+    <div id="qrcode"></div>
+
+    <div class="url-box" id="urlDisplay">Loading…</div>
+  </div>
+
+  <div class="controls">
+    <h3>How to test on your phone</h3>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="text">Run <code>start-app.bat</code> on this computer (you've already done this if you're seeing this page).</div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="text">Connect your phone to <strong>the same Wi-Fi network</strong> as this computer.</div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="text">Open the camera app on your phone and point it at the QR above. Tap the link that appears.</div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="text">The volunteer form should load. Fill it out to test the full flow end-to-end.</div>
+    </div>
+
+    <h3 style="margin-top: 20px;">Customize the URL (optional)</h3>
+    <label for="customUrl">Override URL — useful if the auto-detected one is wrong:</label>
+    <input type="url" id="customUrl" placeholder="http://192.168.x.x:8080/index.html" />
+    <button onclick="updateQR()">Regenerate QR</button>
+    <button onclick="window.print()">Print</button>
+
+    <div class="warning" id="phoneTip" style="display: none;">
+      <strong>Phone can't connect?</strong> Windows Firewall may be blocking port 8080. Either: (a) allow Python/Node through Windows Firewall when prompted, or (b) temporarily disable firewall for testing on your private/home network.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function init() {
+    const host = window.location.host;       // e.g., "192.168.1.10:8080" or "localhost:8080"
+    const protocol = window.location.protocol; // "http:" usually for local
+    const targetUrl = `${protocol}//${host}/index.html`;
+
+    document.getElementById('customUrl').value = targetUrl;
+
+    // Warn if user is on localhost
+    if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+      document.getElementById('hostWarning').style.display = 'block';
+    }
+    document.getElementById('phoneTip').style.display = 'block';
+
+    renderQR(targetUrl);
+  }
+
+  function updateQR() {
+    const url = document.getElementById('customUrl').value.trim();
+    if (url) renderQR(url);
+  }
+
+  function renderQR(url) {
+    document.getElementById('urlDisplay').textContent = url;
+    const container = document.getElementById('qrcode');
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: url,
+      width: 280,
+      height: 280,
+      colorDark: '#0d6efd',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+
+  window.addEventListener('load', init);
+</script>
+
+</body>
+</html>

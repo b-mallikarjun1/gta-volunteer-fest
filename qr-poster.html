@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GTA International Fest — Volunteer QR Poster</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background: #f5f7fb;
+    color: #1f2937;
+    padding: 24px;
+  }
+  .controls {
+    max-width: 720px;
+    margin: 0 auto 24px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .controls h1 { margin: 0 0 4px; font-size: 18px; color: #0a58ca; }
+  .controls p { margin: 0 0 16px; color: #6b7280; font-size: 14px; }
+  .controls input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .controls button {
+    padding: 10px 18px;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+  .controls button:hover { background: #0a58ca; }
+
+  .poster {
+    max-width: 720px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .poster .school { font-size: 18px; color: #6b7280; margin-bottom: 8px; }
+  .poster h2 {
+    font-size: 36px;
+    margin: 0 0 12px;
+    color: #0a58ca;
+    line-height: 1.2;
+  }
+  .poster .sub { color: #6b7280; font-size: 18px; margin-bottom: 32px; }
+  #qrcode {
+    display: inline-block;
+    padding: 20px;
+    background: white;
+    border: 4px solid #0d6efd;
+    border-radius: 16px;
+  }
+  #qrcode canvas, #qrcode img { display: block; }
+  .instructions {
+    margin-top: 32px;
+    text-align: left;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .instructions ol { padding-left: 24px; line-height: 1.8; font-size: 16px; }
+  .url-display {
+    margin-top: 16px;
+    padding: 8px;
+    background: #f5f7fb;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #0a58ca;
+    word-break: break-all;
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .controls, .no-print { display: none !important; }
+    .poster { box-shadow: none; max-width: 100%; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls no-print">
+  <h1>GTA Volunteer QR Poster</h1>
+  <p>Enter the URL where the GTA volunteer form is hosted, then print this page. GTA can email this poster to schools, or print and hand it out at events.</p>
+  <input type="url" id="appUrl" placeholder="https://gta-international-fest.example.com/" />
+  <input type="text" id="schoolName" placeholder="Header text (default: Global Telangana Association)" value="Global Telangana Association" />
+  <button onclick="updateQR()">Update Poster</button>
+  <button onclick="window.print()">Print Poster</button>
+</div>
+
+<div class="poster">
+  <div class="school" id="schoolDisplay">Global Telangana Association</div>
+  <h2>Volunteer at the GTA International Fest</h2>
+  <div class="sub">Middle &amp; high school students — sign up in 2 minutes</div>
+
+  <div id="qrcode"></div>
+
+  <div class="url-display" id="urlDisplay">https://example.com/volunteer-app</div>
+
+  <div class="instructions">
+    <ol>
+      <li>Open your phone camera</li>
+      <li>Point it at the QR code above</li>
+      <li>Tap the link that appears</li>
+      <li>Fill out the form with a parent &amp; submit</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  let qr;
+
+  function updateQR() {
+    const url = document.getElementById('appUrl').value.trim() || window.location.href.replace('qr-poster.html', 'index.html');
+    const schoolName = document.getElementById('schoolName').value.trim() || 'Global Telangana Association';
+
+    document.getElementById('schoolDisplay').textContent = schoolName;
+    document.getElementById('urlDisplay').textContent = url;
+
+    const container = document.getElementById('qrcode');
+    container.innerHTML = '';
+    qr = new QRCode(container, {
+      text: url,
+      width: 320,
+      height: 320,
+      colorDark: '#0d6efd',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+
+  // Initial render — try to auto-detect the index.html in the same folder
+  window.addEventListener('load', () => {
+    const guess = window.location.href.replace('qr-poster.html', 'index.html');
+    document.getElementById('appUrl').value = guess;
+    updateQR();
+  });
+</script>
+
+</body>
+</html>

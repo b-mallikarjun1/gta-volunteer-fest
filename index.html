@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d6efd" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="GTA Volunteer" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <title>Global Telangana Association — GTA International Fest Volunteer Form</title>
+
+  <!-- jsPDF for client-side PDF report generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --primary-dark: #0a58ca;
+      --success: #198754;
+      --danger: #dc3545;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --radius: 12px;
+      --shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 24px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.2px; }
+    header .subtitle { margin: 6px 0 0; opacity: 0.95; font-size: 15px; font-weight: 500; }
+    header .tagline { margin: 4px 0 0; opacity: 0.85; font-size: 13px; }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 17px;
+      color: var(--primary-dark);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
+
+    .field { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    label .req { color: var(--danger); margin-left: 2px; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      background: white;
+      color: var(--text);
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: 20px; height: 20px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--primary);
+    }
+    .checkbox-row label {
+      margin: 0;
+      font-weight: 400;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover:not(:disabled) { background: var(--primary-dark); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--success);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--danger); }
+
+    .status-banner {
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-banner.online { background: #d1e7dd; color: #0f5132; display: block; }
+    .status-banner.offline { background: #fff3cd; color: #664d03; display: block; }
+
+    .helper { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ============ TABS ============ */
+    .tabs {
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      width: auto;
+      padding: 12px 8px;
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab:hover:not(.active) { background: #f5f7fb; color: var(--text); }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+    }
+    .intro-card {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #1e40af;
+    }
+
+    /* ============ CHAT ASSISTANT WIDGET ============ */
+    #chatFab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+      cursor: pointer;
+      font-size: 28px;
+      z-index: 999;
+      width: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+    #chatFab:hover { transform: scale(1.08); }
+    #chatFab .pulse {
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 14px; height: 14px;
+      background: #22c55e;
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+    #chatPanel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 360px;
+      max-width: calc(100vw - 24px);
+      height: 520px;
+      max-height: calc(100vh - 40px);
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    #chatPanel.open { display: flex; }
+    .chat-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header .title { font-weight: 600; font-size: 15px; }
+    .chat-header .subtitle { font-size: 12px; opacity: 0.85; }
+    .chat-header button {
+      background: transparent;
+      color: white;
+      border: none;
+      width: auto;
+      padding: 4px 8px;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f8f9fb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      word-wrap: break-word;
+    }
+    .chat-msg.bot {
+      background: white;
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      border-top-left-radius: 4px;
+    }
+    .chat-msg.user {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-top-right-radius: 4px;
+    }
+    .chat-msg.typing {
+      background: white;
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chat-suggestions button {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 14px;
+      font-weight: 500;
+    }
+    .chat-input-row {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      background: white;
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .chat-input-row button {
+      width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 20px;
+    }
+    @media (max-width: 480px) {
+      #chatPanel { width: calc(100vw - 16px); right: 8px; bottom: 8px; height: calc(100vh - 16px); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Success screen */
+    #successScreen { display: none; text-align: center; padding: 40px 20px; }
+    #successScreen .checkmark {
+      width: 80px; height: 80px;
+      margin: 0 auto 16px;
+      background: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 42px;
+    }
+    #successScreen h2 { color: var(--success); margin: 0 0 8px; }
+    #successScreen p { color: var(--muted); margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Global Telangana Association</h1>
+    <p class="subtitle">GTA International Fest</p>
+    <p class="tagline">Student Volunteer Registration</p>
+  </header>
+
+  <main>
+    <div id="statusBanner" class="status-banner"></div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabRegister" type="button" onclick="switchView('register')">📝 Register</button>
+      <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Submit Hours</button>
+    </div>
+
+    <div id="registerView">
+    <form id="volunteerForm" novalidate>
+      <!-- ============ SECTION 1: STUDENT INFO ============ -->
+      <div class="card">
+        <h2>1. Student Information</h2>
+        <div class="row">
+          <div class="field">
+            <label for="firstName">First Name<span class="req">*</span></label>
+            <input type="text" id="firstName" name="firstName" required autocomplete="given-name" />
+          </div>
+          <div class="field">
+            <label for="lastName">Last Name<span class="req">*</span></label>
+            <input type="text" id="lastName" name="lastName" required autocomplete="family-name" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="dob">Date of Birth<span class="req">*</span></label>
+            <input type="date" id="dob" name="dob" required />
+          </div>
+          <div class="field">
+            <label for="gradeLevel">Grade Level<span class="req">*</span></label>
+            <select id="gradeLevel" name="gradeLevel" required>
+              <option value="">-- Select grade --</option>
+              <option>6th Grade</option>
+              <option>7th Grade</option>
+              <option>8th Grade</option>
+              <option>9th Grade</option>
+              <option>10th Grade</option>
+              <option>11th Grade</option>
+              <option>12th Grade</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="schoolName">School Name<span class="req">*</span></label>
+          <input type="text" id="schoolName" name="schoolName" required />
+        </div>
+
+        <div class="field">
+          <label for="studentId">Student ID</label>
+          <input type="text" id="studentId" name="studentId" />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="studentEmail">Student Email<span class="req">*</span></label>
+            <input type="email" id="studentEmail" name="studentEmail" required autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="studentPhone">Student Phone</label>
+            <input type="tel" id="studentPhone" name="studentPhone" autocomplete="tel" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SECTION 2: PARENT/GUARDIAN ============ -->
+      <div class="card">
+        <h2>2. Parent / Guardian Consent</h2>
+        <div class="row">
+          <div class="field">
+            <label for="parentName">Parent/Guardian Name<span class="req">*</span></label>
+            <input type="text" id="parentName" name="parentName" required />
+          </div>
+          <div class="field">
+            <label for="parentRelation">Relationship</label>
+            <select id="parentRelation" name="parentRelation">
+              <option value="">-- Select --</option>
+              <option>Mother</option>
+              <option>Father</option>
+              <option>Guardian</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="parentEmail">Parent Email<span class="req">*</span></label>
+            <input type="email" id="parentEmail" name="parentEmail" required />
+          </div>
+          <div class="field">
+            <label for="parentPhone">Parent Phone<span class="req">*</span></label>
+            <input type="tel" id="parentPhone" name="parentPhone" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="emergencyName">Emergency Contact Name<span class="req">*</span></label>
+            <input type="text" id="emergencyName" name="emergencyName" required />
+          </div>
+          <div class="field">
+            <label for="emergencyPhone">Emergency Contact Phone<span class="req">*</span></label>
+            <input type="tel" id="emergencyPhone" name="emergencyPhone" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="checkbox-row">
+            <input type="checkbox" id="parentConsent" name="parentConsent" required />
+            <label for="parentConsent">
+              <strong>Parent/Guardian Consent (required):</strong> I confirm that I am the parent or legal guardian and I give permission for the student to volunteer at the GTA International Fest organized by the Global Telangana Association (GTA). I understand that GTA and event volunteers will take reasonable safety precautions, and I agree that my emergency contact information may be used during the event if needed.
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SECTION 3: VOLUNTEER ACTIVITY ============ -->
+      <div class="card">
+        <h2>3. Volunteer Activity Details</h2>
+        <div class="field">
+          <label for="activityName">Volunteer Role<span class="req">*</span></label>
+          <select id="activityName" name="activityName" required onchange="toggleOtherRole()">
+            <option value="">-- Select a role --</option>
+            <option>Registration desk</option>
+            <option>Cultural program help</option>
+            <option>Food service</option>
+            <option>Stage crew</option>
+            <option>Parking</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field" id="otherRoleField" style="display: none;">
+          <label for="activityNameOther">Please describe your preferred role<span class="req">*</span></label>
+          <input type="text" id="activityNameOther" name="activityNameOther" placeholder="e.g., Photography, Translation, Setup help" />
+        </div>
+
+        <div class="field">
+          <label for="organization">Event / Organization<span class="req">*</span></label>
+          <input type="text" id="organization" name="organization" value="Global Telangana Association — GTA International Fest" required />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="activityDate">Activity Date<span class="req">*</span></label>
+            <input type="date" id="activityDate" name="activityDate" required />
+          </div>
+          <div class="field">
+            <label for="hours">Hours Volunteered<span class="req">*</span></label>
+            <input type="number" id="hours" name="hours" min="0" step="0.25" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="supervisorName">Supervisor Name<span class="req">*</span></label>
+            <input type="text" id="supervisorName" name="supervisorName" required />
+          </div>
+          <div class="field">
+            <label for="supervisorContact">Supervisor Contact<span class="req">*</span></label>
+            <input type="text" id="supervisorContact" name="supervisorContact" placeholder="Email or phone" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="description">Description of Work Performed<span class="req">*</span></label>
+          <textarea id="description" name="description" required placeholder="Briefly describe what you did during this volunteer activity..."></textarea>
+        </div>
+      </div>
+
+      <!-- ============ SECTION 4: MEDICAL ============ -->
+      <div class="card">
+        <h2>4. Medical &amp; Allergy Information</h2>
+        <p class="helper" style="margin-top: -8px; margin-bottom: 14px;">
+          Optional but strongly recommended for off-site activities.
+        </p>
+
+        <div class="field">
+          <label for="allergies">Known Allergies</label>
+          <input type="text" id="allergies" name="allergies" placeholder="e.g., peanuts, bee stings, none" />
+        </div>
+
+        <div class="field">
+          <label for="medicalConditions">Medical Conditions</label>
+          <input type="text" id="medicalConditions" name="medicalConditions" placeholder="e.g., asthma, diabetes, none" />
+        </div>
+
+        <div class="field">
+          <label for="medications">Current Medications</label>
+          <input type="text" id="medications" name="medications" placeholder="e.g., inhaler, EpiPen, none" />
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn">Submit Form &amp; Generate Report</button>
+    </form>
+
+    <!-- Success screen shown after submission -->
+    <div id="successScreen" class="card">
+      <div class="checkmark">&#10003;</div>
+      <h2>Thank you for volunteering!</h2>
+      <p id="successMsg">Your registration has been recorded. The GTA team will reach out with event details, schedule, and your assigned role.</p>
+      <button onclick="resetForm()" style="background: var(--success); margin-top: 8px;">Register Another Volunteer</button>
+    </div>
+    </div>
+
+    <!-- ============ HOURS SUBMISSION VIEW ============ -->
+    <div id="hoursView" style="display: none;">
+      <div class="intro-card">
+        Already volunteered? Log your completed hours here. We'll match you to your registration using your email and last name, then update GTA's records automatically.
+      </div>
+
+      <form id="hoursForm" novalidate>
+        <div class="card">
+          <h2>1. Identify Yourself</h2>
+          <div class="row">
+            <div class="field">
+              <label for="hoursEmail">Email used at registration<span class="req">*</span></label>
+              <input type="email" id="hoursEmail" name="email" required autocomplete="email" />
+            </div>
+            <div class="field">
+              <label for="hoursLastName">Last Name<span class="req">*</span></label>
+              <input type="text" id="hoursLastName" name="lastName" required autocomplete="family-name" />
+            </div>
+          </div>
+          <p class="helper">We use these two fields to find your registration. Make sure they match what you entered before.</p>
+        </div>
+
+        <div class="card">
+          <h2>2. Hours Volunteered</h2>
+          <div class="row">
+            <div class="field">
+              <label for="hoursCompleted">Total Hours Volunteered<span class="req">*</span></label>
+              <input type="number" id="hoursCompleted" name="hoursCompleted" min="0.25" step="0.25" required placeholder="e.g., 4" />
+            </div>
+            <div class="field">
+              <label for="dateVolunteered">Date(s) Volunteered</label>
+              <input type="text" id="dateVolunteered" name="dateVolunteered" placeholder="e.g., June 15, 2026" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="hoursNotes">What did you help with? (optional)</label>
+            <textarea id="hoursNotes" name="notes" placeholder="Brief summary of what you did at the event..."></textarea>
+          </div>
+        </div>
+
+        <button type="submit" id="hoursSubmitBtn">Submit Hours &amp; Get Receipt</button>
+      </form>
+
+      <!-- Hours success screen -->
+      <div id="hoursSuccessScreen" class="card" style="display: none; text-align: center; padding: 40px 20px;">
+        <div class="checkmark" style="width:80px; height:80px; margin:0 auto 16px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:42px;">&#10003;</div>
+        <h2 style="color: var(--success); margin: 0 0 8px;">Hours recorded!</h2>
+        <p id="hoursSuccessMsg" style="color: var(--muted); margin: 0 0 20px;">Your hours have been added to your GTA volunteer record. A receipt has been downloaded — keep it for your community-service credit.</p>
+        <button onclick="resetHoursForm()" style="background: var(--success); margin-top: 8px;">Submit Hours for Another Volunteer</button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>&copy; Global Telangana Association &middot; GTA International Fest Volunteer Program</p>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- ============ CHAT ASSISTANT ============ -->
+  <button id="chatFab" aria-label="Open volunteer help chat">
+    💬
+    <span class="pulse"></span>
+  </button>
+
+  <div id="chatPanel" role="dialog" aria-label="Volunteer help assistant">
+    <div class="chat-header">
+      <div>
+        <div class="title">GTA Volunteer Helper</div>
+        <div class="subtitle">Ask about roles, the event, or the form</div>
+      </div>
+      <button id="chatClose" aria-label="Close chat">×</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <form class="chat-input-row" id="chatForm">
+      <input type="text" id="chatInput" placeholder="Type your question…" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- App configuration & logic -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="chat-assistant.js"></script>
+</body>
+</html>

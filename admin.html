@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0d6efd" />
+<title>GTA Volunteer — Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #0d6efd;
+    --primary-dark: #0a58ca;
+    --success: #198754;
+    --warning: #f59e0b;
+    --danger: #dc3545;
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: var(--shadow);
+  }
+  header .titles h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  header .titles p { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
+  header .actions { display: flex; gap: 8px; align-items: center; }
+  header .meta { font-size: 12px; opacity: 0.85; margin-right: 8px; }
+  header button {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  header button:hover { background: rgba(255,255,255,0.3); }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 20px; }
+
+  /* KPI cards */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+  }
+  .kpi.success { border-left-color: var(--success); }
+  .kpi.warning { border-left-color: var(--warning); }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; line-height: 1.1; }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Charts grid */
+  .charts {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .chart-card h3 { margin: 0 0 12px; font-size: 15px; color: var(--primary-dark); }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* Tables */
+  .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .tables { grid-template-columns: 1fr; } }
+  .table-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .table-card h3 { margin: 0 0 12px; font-size: 15px; color: var(--primary-dark); display: flex; align-items: center; justify-content: space-between; }
+  .table-card .badge {
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .table-card .badge.warning { background: var(--warning); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
+  td .name { font-weight: 600; }
+  td .meta { font-size: 11px; color: var(--muted); }
+  .empty { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+
+  /* Lock screen */
+  #lockScreen {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .lock-card {
+    background: white;
+    border-radius: 16px;
+    padding: 36px 28px;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .lock-card .icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 14px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 30px;
+  }
+  .lock-card h2 { margin: 0 0 6px; font-size: 18px; color: var(--text); }
+  .lock-card p { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  .lock-card input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+  .lock-card button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .lock-card .err {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  .footer-note { text-align: center; padding: 24px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ============ LOCK SCREEN ============ -->
+<div id="lockScreen">
+  <form class="lock-card" id="lockForm">
+    <div class="icon">🔒</div>
+    <h2>GTA Admin Dashboard</h2>
+    <p>Enter the admin PIN to view volunteer stats.</p>
+    <input type="password" id="pinInput" placeholder="Enter PIN" autocomplete="off" autofocus />
+    <button type="submit">Unlock</button>
+    <div class="err" id="lockErr"></div>
+  </form>
+</div>
+
+<!-- ============ DASHBOARD (hidden until unlocked) ============ -->
+<div id="dashboard" style="display: none;">
+  <header>
+    <div class="titles">
+      <h1>GTA International Fest — Admin Dashboard</h1>
+      <p>Live volunteer stats from the GTA records sheet</p>
+    </div>
+    <div class="actions">
+      <span class="meta" id="lastRefresh">—</span>
+      <button onclick="loadStats()">↻ Refresh</button>
+      <button onclick="logout()">Lock</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="loading" class="loading">Loading volunteer stats…</div>
+    <div id="content" style="display: none;">
+
+      <!-- KPI cards -->
+      <section class="kpis">
+        <div class="kpi">
+          <div class="label">Registered</div>
+          <div class="value" id="kpiRegistered">0</div>
+          <div class="sub">Total student volunteers signed up</div>
+        </div>
+        <div class="kpi success">
+          <div class="label">Completed</div>
+          <div class="value" id="kpiCompleted">0</div>
+          <div class="sub" id="kpiCompletedSub">0% completion rate</div>
+        </div>
+        <div class="kpi warning">
+          <div class="label">Pending hours</div>
+          <div class="value" id="kpiPending">0</div>
+          <div class="sub">Registered, not yet logged hours</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Hours pledged</div>
+          <div class="value" id="kpiHoursPledged">0</div>
+          <div class="sub">Total student-hours promised</div>
+        </div>
+        <div class="kpi success">
+          <div class="label">Hours completed</div>
+          <div class="value" id="kpiHoursCompleted">0</div>
+          <div class="sub" id="kpiHoursSub">0% of pledged</div>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="charts">
+        <div class="chart-card">
+          <h3>Volunteers by School</h3>
+          <div class="chart-wrap"><canvas id="chartSchools"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Roles</h3>
+          <div class="chart-wrap"><canvas id="chartRoles"></canvas></div>
+        </div>
+      </section>
+      <section class="charts">
+        <div class="chart-card">
+          <h3>Volunteers by Grade Level</h3>
+          <div class="chart-wrap"><canvas id="chartGrades"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Registrations vs Completions</h3>
+          <div class="chart-wrap"><canvas id="chartFunnel"></canvas></div>
+        </div>
+      </section>
+
+      <!-- Tables -->
+      <section class="tables">
+        <div class="table-card">
+          <h3>Recent Registrations <span class="badge" id="recentBadge">0</span></h3>
+          <table id="recentTable">
+            <thead>
+              <tr><th>Volunteer</th><th>School / Grade</th><th>Role</th><th>Hours</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-card">
+          <h3>Pending Follow-up <span class="badge warning" id="pendingBadge">0</span></h3>
+          <table id="pendingTable">
+            <thead>
+              <tr><th>Volunteer</th><th>Contact</th><th>Pledged</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        Live data from GTA's volunteer registration sheet · No data leaves your browser, except the encrypted call to the GTA Apps Script backend.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script>
+  let currentPin = '';
+  let charts = {};
+
+  // ---- Lock screen ----
+  document.getElementById('lockForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pin = document.getElementById('pinInput').value.trim();
+    if (!pin) return;
+    document.getElementById('lockErr').textContent = '';
+    try {
+      const stats = await fetchStats(pin);
+      currentPin = pin;
+      sessionStorage.setItem('gtaAdminPin', pin); // remembered for this browser session only
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderStats(stats);
+    } catch (err) {
+      document.getElementById('lockErr').textContent = err.message || 'Invalid PIN.';
+      document.getElementById('pinInput').select();
+    }
+  });
+
+  function logout() {
+    currentPin = '';
+    sessionStorage.removeItem('gtaAdminPin');
+    location.reload();
+  }
+
+  // ---- Auto-restore session if PIN saved this session ----
+  window.addEventListener('load', () => {
+    const saved = sessionStorage.getItem('gtaAdminPin');
+    if (saved) {
+      document.getElementById('pinInput').value = saved;
+      document.getElementById('lockForm').requestSubmit();
+    }
+  });
+
+  // ---- Fetch stats from Apps Script ----
+  async function fetchStats(pin) {
+    if (!CONFIG.appsScriptUrl || CONFIG.appsScriptUrl.includes('YOUR_APPS_SCRIPT_URL')) {
+      throw new Error('GTA backend URL not configured. Edit config.js first.');
+    }
+    const res = await fetch(CONFIG.appsScriptUrl, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getStats', adminPin: pin })
+    });
+    if (!res.ok) throw new Error('Could not reach the GTA backend.');
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Invalid PIN.');
+    return data.stats;
+  }
+
+  async function loadStats() {
+    if (!currentPin) return;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    try {
+      const stats = await fetchStats(currentPin);
+      renderStats(stats);
+    } catch (err) {
+      alert(err.message || 'Failed to load stats.');
+    }
+  }
+
+  function renderStats(s) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('lastRefresh').textContent = 'Refreshed: ' + s.generatedAt;
+
+    // KPIs
+    document.getElementById('kpiRegistered').textContent = s.totalRegistered;
+    document.getElementById('kpiCompleted').textContent = s.totalCompleted;
+    document.getElementById('kpiCompletedSub').textContent = s.completionRate + '% completion rate';
+    document.getElementById('kpiPending').textContent = s.totalPending;
+    document.getElementById('kpiHoursPledged').textContent = s.totalHoursPledged;
+    document.getElementById('kpiHoursCompleted').textContent = s.totalHoursCompleted;
+    const hoursPct = s.totalHoursPledged > 0
+      ? Math.round((s.totalHoursCompleted / s.totalHoursPledged) * 100)
+      : 0;
+    document.getElementById('kpiHoursSub').textContent = hoursPct + '% of pledged';
+
+    // Charts
+    drawBarChart('chartSchools', s.bySchool.slice(0, 10), 'Volunteers');
+    drawDonutChart('chartRoles', s.byRole);
+    drawBarChart('chartGrades', s.byGrade, 'Volunteers');
+    drawFunnelChart('chartFunnel', s.totalRegistered, s.totalCompleted);
+
+    // Tables
+    const recentBody = document.querySelector('#recentTable tbody');
+    recentBody.innerHTML = '';
+    if (s.recent.length === 0) {
+      recentBody.innerHTML = `<tr><td colspan="4" class="empty">No registrations yet.</td></tr>`;
+    } else {
+      s.recent.forEach(r => {
+        recentBody.innerHTML += `
+          <tr>
+            <td><div class="name">${escapeHtml(r.name) || '—'}</div><div class="meta">${escapeHtml(r.submittedAt)}</div></td>
+            <td>${escapeHtml(r.school)}<div class="meta">${escapeHtml(r.grade)}</div></td>
+            <td>${escapeHtml(r.role) || '—'}</td>
+            <td>${r.hoursCompleted ? '<strong>' + r.hoursCompleted + ' done</strong>' : (r.hoursPledged + ' pledged')}</td>
+          </tr>`;
+      });
+    }
+    document.getElementById('recentBadge').textContent = s.recent.length;
+
+    const pendingBody = document.querySelector('#pendingTable tbody');
+    pendingBody.innerHTML = '';
+    if (s.pending.length === 0) {
+      pendingBody.innerHTML = `<tr><td colspan="3" class="empty">🎉 Nobody pending — everyone has logged hours!</td></tr>`;
+    } else {
+      s.pending.slice(0, 20).forEach(p => {
+        pendingBody.innerHTML += `
+          <tr>
+            <td><div class="name">${escapeHtml(p.name) || '—'}</div><div class="meta">${escapeHtml(p.school)} · ${escapeHtml(p.role)}</div></td>
+            <td>${escapeHtml(p.email)}<div class="meta">${escapeHtml(p.parentPhone)}</div></td>
+            <td>${p.hoursPledged || '—'}</td>
+          </tr>`;
+      });
+    }
+    document.getElementById('pendingBadge').textContent = s.pending.length;
+  }
+
+  // ---- Chart helpers ----
+  function drawBarChart(canvasId, items, label) {
+    if (charts[canvasId]) charts[canvasId].destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    charts[canvasId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: items.map(i => i.label),
+        datasets: [{
+          label: label,
+          data: items.map(i => i.count),
+          backgroundColor: '#0d6efd',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  function drawDonutChart(canvasId, items) {
+    if (charts[canvasId]) charts[canvasId].destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const palette = ['#0d6efd', '#198754', '#f59e0b', '#dc3545', '#6f42c1', '#0dcaf0', '#fd7e14', '#20c997'];
+    charts[canvasId] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: items.map(i => i.label),
+        datasets: [{
+          data: items.map(i => i.count),
+          backgroundColor: items.map((_, i) => palette[i % palette.length]),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+      }
+    });
+  }
+
+  function drawFunnelChart(canvasId, registered, completed) {
+    if (charts[canvasId]) charts[canvasId].destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    charts[canvasId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Registered', 'Completed Hours'],
+        datasets: [{
+          data: [registered, completed],
+          backgroundColor: ['#0d6efd', '#198754'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+
+</body>
+</html>
