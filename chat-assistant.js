@@ -129,16 +129,50 @@ function closeChat() {
   chatPanel.classList.remove('open');
   chatFab.style.display = 'flex';
 }
-function appendMessage(text, role) {
+function appendMessage(text, role, meta) {
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
   div.textContent = text;
+
+  // Add a "peek behind the curtain" 🔍 button on bot messages so students
+  // can see the system prompt + raw response. Demystifies AI.
+  if (role === 'bot' && meta) {
+    const peekWrap = document.createElement('div');
+    peekWrap.className = 'chat-peek-wrap';
+    peekWrap.innerHTML = `
+      <button type="button" class="chat-peek-btn" title="How did this AI answer?">🔍 How did the AI answer this?</button>
+      <div class="chat-peek-panel" hidden>
+        <div class="peek-row"><strong>Source:</strong> ${meta.source}</div>
+        ${meta.model ? `<div class="peek-row"><strong>Model:</strong> ${meta.model}</div>` : ''}
+        ${meta.systemPrompt ? `<details><summary>System prompt (the rules the AI follows)</summary><pre>${escapeHtmlChat(meta.systemPrompt)}</pre></details>` : ''}
+        ${meta.userMessage ? `<details><summary>Your question (sent to the AI)</summary><pre>${escapeHtmlChat(meta.userMessage)}</pre></details>` : ''}
+        ${meta.response ? `<details><summary>Raw AI response (before being shown to you)</summary><pre>${escapeHtmlChat(meta.response)}</pre></details>` : ''}
+        <p class="peek-takeaway">${meta.lesson || 'AI is just text in, text out. The prompt shapes everything you see.'}</p>
+      </div>
+    `;
+    div.appendChild(peekWrap);
+    const pBtn = peekWrap.querySelector('.chat-peek-btn');
+    const pPanel = peekWrap.querySelector('.chat-peek-panel');
+    pBtn.addEventListener('click', () => { pPanel.hidden = !pPanel.hidden; });
+  }
+
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return div;
 }
-function showBotMessage(text, withSuggestions = false) {
-  appendMessage(text, 'bot');
+
+function escapeHtmlChat(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function showBotMessage(text, withSuggestions = false, meta) {
+  appendMessage(text, 'bot', meta || {
+    source: 'Built-in greeting (not from an AI model)',
+    lesson: 'Not every chat reply uses AI — sometimes a fixed greeting is enough. Knowing when to use AI vs. a hard-coded answer is part of being a good engineer.'
+  });
   if (withSuggestions) {
     const suggestions = ['What volunteer roles are available?', 'Do I need parent consent?', 'Will I get a community-service certificate?'];
     const wrap = document.createElement('div');
@@ -181,10 +215,13 @@ function findFaqAnswer(question) {
 }
 
 /* ----------------------- Groq API call ----------------------- */
+let lastReplyMeta = {};
+
 async function askGroq(userMessage) {
   conversation.push({ role: 'user', content: userMessage });
   // Cap history at last 10 turns to keep context small
   const recent = [conversation[0], ...conversation.slice(-9)];
+  const modelName = 'llama-3.1-8b-instant';
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -193,7 +230,7 @@ async function askGroq(userMessage) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: modelName,
       messages: recent,
       temperature: 0.5,
       max_tokens: 200
@@ -204,6 +241,15 @@ async function askGroq(userMessage) {
   const reply = data.choices?.[0]?.message?.content?.trim();
   if (!reply) throw new Error('No reply from API');
   conversation.push({ role: 'assistant', content: reply });
+
+  lastReplyMeta = {
+    source: 'Live AI response (Groq cloud)',
+    model: modelName,
+    systemPrompt: SYSTEM_PROMPT,
+    userMessage: userMessage,
+    response: reply,
+    lesson: 'AI is text-in, text-out. The system prompt above defines the AI\'s personality and rules. The user message is what you typed. Change the system prompt and the AI behaves completely differently.'
+  };
   return reply;
 }
 
@@ -220,6 +266,7 @@ async function sendUserMessage(text) {
       && CONFIG.groqApiKey.length > 10
       && !CONFIG.groqApiKey.includes('YOUR_GROQ_KEY');
 
+    lastReplyMeta = {}; // clear from previous turn
     if (hasGroqKey && navigator.onLine) {
       try {
         reply = await askGroq(text);
@@ -228,6 +275,12 @@ async function sendUserMessage(text) {
         console.warn('Groq fallback:', apiErr);
         reply = findFaqAnswer(text)
           || "I'm having trouble reaching my AI brain right now. Try one of the suggested questions, or check the form's section labels — they explain each field.";
+        lastReplyMeta = {
+          source: 'FAQ fallback (AI was unreachable)',
+          userMessage: text,
+          response: reply,
+          lesson: 'A good app handles failure gracefully. When the AI is down, the chat falls back to pre-written answers so students still get help.'
+        };
       }
     } else {
       // No API key configured — use FAQ
@@ -236,10 +289,15 @@ async function sendUserMessage(text) {
     }
 
     hideTyping();
-    appendMessage(reply, 'bot');
+    // Build meta for peek-behind-the-curtain
+    const meta = lastReplyMeta.source ? lastReplyMeta : {
+      source: 'Built-in FAQ (no AI model used for this answer)',
+      lesson: 'When the question matches a FAQ keyword, the app skips the AI entirely and uses a pre-written answer. Faster, free, and private.'
+    };
+    appendMessage(reply, 'bot', meta);
   } catch (err) {
     hideTyping();
-    appendMessage("Something went wrong. Please try again.", 'bot');
+    appendMessage("Something went wrong. Please try again.", 'bot', { source: 'Error fallback' });
     console.error(err);
   }
 }

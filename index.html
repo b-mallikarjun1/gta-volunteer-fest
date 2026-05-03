@@ -258,6 +258,197 @@
 
     .helper { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
+    /* ============ AI FEATURE STYLING ============ */
+    /* Voice-fill button at top of form */
+    #voiceFillWrap {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ai-feature-btn {
+      flex: 1;
+      width: auto;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--fest-saffron), var(--fest-marigold));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+      transition: transform 0.15s;
+    }
+    .ai-feature-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .ai-feature-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .ai-feature-btn.recording {
+      background: linear-gradient(135deg, var(--fest-red), #e94e1b);
+      animation: pulse-record 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse-record {
+      0%, 100% { box-shadow: 0 4px 12px rgba(193, 39, 45, 0.35); }
+      50%      { box-shadow: 0 4px 24px rgba(193, 39, 45, 0.6); }
+    }
+    .ai-peek-btn {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      padding: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .ai-peek-btn:hover { background: #f5f7fb; }
+    .ai-peek-panel {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px 14px;
+      background: #f5f7fb;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .ai-peek-panel pre {
+      max-height: 200px;
+      overflow: auto;
+    }
+
+    /* Language picker */
+    .lang-picker {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .lang-btn {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .lang-btn:hover { background: #f5f7fb; }
+    .lang-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .lang-picker .ai-peek-btn { width: 28px; height: 28px; font-size: 12px; }
+
+    /* Role recommendation panel */
+    .role-recommend {
+      background: linear-gradient(135deg, #fff8ec, #fdf6e3);
+      border: 1px solid var(--fest-gold);
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      animation: slide-down 0.3s ease-out;
+    }
+    @keyframes slide-down {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .role-recommend .rr-content { margin-bottom: 10px; line-height: 1.5; }
+    .role-recommend .rr-why { font-style: italic; color: #78350f; margin-top: 4px; }
+    .role-recommend .rr-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .role-recommend .rr-actions button {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 16px;
+    }
+    .role-recommend .rr-accept {
+      background: var(--fest-saffron);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+    .role-recommend .rr-dismiss {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .role-recommend .rr-peek {
+      background: white;
+      border: 1px solid var(--border);
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+    }
+    .role-recommend .rr-peek-panel {
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Chat peek-behind-the-curtain */
+    .chat-peek-wrap {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0,0,0,0.08);
+    }
+    .chat-peek-btn {
+      width: auto;
+      padding: 4px 8px;
+      font-size: 11px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .chat-peek-btn:hover { background: #f5f7fb; color: var(--text); }
+    .chat-peek-panel {
+      margin-top: 8px;
+      padding: 10px;
+      background: #f5f7fb;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .chat-peek-panel .peek-row { margin-bottom: 4px; }
+    .chat-peek-panel details { margin-top: 6px; }
+    .chat-peek-panel summary { cursor: pointer; font-size: 11px; color: var(--primary); }
+    .chat-peek-panel pre {
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow: auto;
+      font-size: 11px;
+      background: white;
+      padding: 6px;
+      border-radius: 4px;
+      margin: 4px 0;
+    }
+    .chat-peek-panel .peek-takeaway {
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: #fff8ec;
+      border-left: 3px solid var(--fest-gold);
+      font-size: 11px;
+      color: #78350f;
+    }
+
     /* ============ TABS ============ */
     .tabs {
       display: flex;
@@ -858,5 +1049,6 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="chat-assistant.js"></script>
+  <script src="ai-features.js"></script>
 </body>
 </html>
