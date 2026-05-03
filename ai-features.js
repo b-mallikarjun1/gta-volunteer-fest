@@ -9,32 +9,50 @@
    If the key is missing, each feature degrades gracefully.
    ============================================================ */
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+/* All AI calls go through the GTA Apps Script proxy — the Groq API key
+   stays on the server, never in the browser. */
 const GROQ_MODEL = 'llama-3.1-8b-instant';
 
+// Get or create a per-tab session ID for rate-limiting (server-side)
+function getAiSessionId() {
+  try {
+    let id = sessionStorage.getItem('aiSessionId');
+    if (!id) {
+      id = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem('aiSessionId', id);
+    }
+    return id;
+  } catch (e) {
+    return 'sess-' + Date.now();
+  }
+}
+
 function hasGroqKey() {
-  return CONFIG.groqApiKey
-    && CONFIG.groqApiKey.length > 10
-    && !CONFIG.groqApiKey.includes('YOUR_GROQ_KEY');
+  // After migration, "having AI" means having the Apps Script URL configured.
+  // The actual Groq key now lives only in the Apps Script.
+  return CONFIG.appsScriptUrl
+      && CONFIG.appsScriptUrl.length > 20
+      && !CONFIG.appsScriptUrl.includes('YOUR_APPS_SCRIPT_URL');
 }
 
 async function callGroq(messages, opts = {}) {
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(CONFIG.appsScriptUrl, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CONFIG.groqApiKey}`,
-      'Content-Type': 'application/json'
-    },
+    mode: 'cors',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages,
+      action: 'proxyGroq',
+      sessionId: getAiSessionId(),
+      messages: messages,
       temperature: opts.temperature ?? 0.2,
-      max_tokens: opts.max_tokens ?? 400
+      maxTokens: opts.max_tokens ?? 400
     })
   });
-  if (!res.ok) throw new Error(`Groq API: ${res.status}`);
+  if (!res.ok) throw new Error('Proxy: ' + res.status);
   const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() || '';
+  if (data.status !== 'ok') throw new Error(data.message || 'Proxy returned error');
+  return data.reply || '';
 }
 
 /* ============================================================

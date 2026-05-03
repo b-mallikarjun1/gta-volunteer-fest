@@ -214,7 +214,7 @@ function findFaqAnswer(question) {
   return bestScore > 0 ? best.answer : null;
 }
 
-/* ----------------------- Groq API call ----------------------- */
+/* ----------------------- Groq API call (proxied through Apps Script) ----------------------- */
 let lastReplyMeta = {};
 
 async function askGroq(userMessage) {
@@ -223,32 +223,35 @@ async function askGroq(userMessage) {
   const recent = [conversation[0], ...conversation.slice(-9)];
   const modelName = 'llama-3.1-8b-instant';
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  // Calls the GTA Apps Script proxy, which forwards to Groq using a server-side key.
+  // The Groq API key is NOT in the browser anymore.
+  const res = await fetch(CONFIG.appsScriptUrl, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CONFIG.groqApiKey}`,
-      'Content-Type': 'application/json'
-    },
+    mode: 'cors',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({
-      model: modelName,
+      action: 'proxyGroq',
+      sessionId: (typeof getAiSessionId === 'function' ? getAiSessionId() : 'chat'),
       messages: recent,
       temperature: 0.5,
-      max_tokens: 200
+      maxTokens: 220
     })
   });
-  if (!res.ok) throw new Error(`Groq API: ${res.status}`);
+  if (!res.ok) throw new Error('Proxy: ' + res.status);
   const data = await res.json();
-  const reply = data.choices?.[0]?.message?.content?.trim();
-  if (!reply) throw new Error('No reply from API');
+  if (data.status !== 'ok') throw new Error(data.message || 'Proxy error');
+  const reply = (data.reply || '').trim();
+  if (!reply) throw new Error('No reply from proxy');
   conversation.push({ role: 'assistant', content: reply });
 
   lastReplyMeta = {
-    source: 'Live AI response (Groq cloud)',
+    source: 'Live AI response (via GTA Apps Script proxy → Groq)',
     model: modelName,
     systemPrompt: SYSTEM_PROMPT,
     userMessage: userMessage,
     response: reply,
-    lesson: 'AI is text-in, text-out. The system prompt above defines the AI\'s personality and rules. The user message is what you typed. Change the system prompt and the AI behaves completely differently.'
+    lesson: "AI is text-in, text-out. Your message went to GTA's server first (so the API key stays private), which forwarded it to Groq. The system prompt above defines the AI's personality."
   };
   return reply;
 }
@@ -262,12 +265,11 @@ async function sendUserMessage(text) {
 
   try {
     let reply;
-    const hasGroqKey = CONFIG.groqApiKey
-      && CONFIG.groqApiKey.length > 10
-      && !CONFIG.groqApiKey.includes('YOUR_GROQ_KEY');
-
     lastReplyMeta = {}; // clear from previous turn
-    if (hasGroqKey && navigator.onLine) {
+    const hasProxy = CONFIG.appsScriptUrl
+                  && CONFIG.appsScriptUrl.length > 20
+                  && !CONFIG.appsScriptUrl.includes('YOUR_APPS_SCRIPT_URL');
+    if (hasProxy && navigator.onLine) {
       try {
         reply = await askGroq(text);
       } catch (apiErr) {

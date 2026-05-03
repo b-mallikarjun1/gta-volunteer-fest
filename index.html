@@ -401,6 +401,41 @@
       line-height: 1.5;
     }
 
+    /* Privacy notice block above the consent checkbox */
+    .privacy-notice {
+      background: linear-gradient(135deg, #fff8ec, #fdf6e3);
+      border: 1px solid var(--fest-gold);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .privacy-notice h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #78350f;
+      letter-spacing: 0.2px;
+    }
+    .privacy-notice p { margin: 0 0 10px; }
+    .privacy-notice details { margin-bottom: 6px; }
+    .privacy-notice details summary {
+      cursor: pointer;
+      padding: 6px 8px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 6px;
+      font-size: 13px;
+      color: #78350f;
+      list-style: none;
+    }
+    .privacy-notice details summary::-webkit-details-marker { display: none; }
+    .privacy-notice details summary::before { content: '▸ '; color: var(--fest-gold); margin-right: 4px; }
+    .privacy-notice details[open] summary::before { content: '▾ '; }
+    .privacy-notice ul { margin: 8px 0 4px 8px; padding-left: 20px; }
+    .privacy-notice li { margin-bottom: 4px; }
+    .privacy-notice a { color: var(--fest-red); text-decoration: underline; }
+
     /* "Ask AI about AI" learning tab */
     .learn-intro h2 { color: var(--primary-dark); }
     .learn-chat-card { padding: 0; overflow: hidden; }
@@ -949,11 +984,53 @@
           </div>
         </div>
 
+        <!-- ============ PRIVACY NOTICE ============ -->
+        <div class="privacy-notice">
+          <h3>🛡️ Privacy &amp; Your Data</h3>
+          <p>Before you give consent below, please read how this data is handled. This notice is written in plain language so students and parents both understand.</p>
+
+          <details open>
+            <summary><strong>What we collect &amp; why</strong></summary>
+            <ul>
+              <li><strong>Identity &amp; contact:</strong> name, date of birth, email, phone — to register the volunteer and contact them about the event.</li>
+              <li><strong>Parent/guardian info:</strong> required because volunteers are minors. Used for consent and emergency contact only.</li>
+              <li><strong>School &amp; grade:</strong> so GTA knows where their volunteers come from.</li>
+              <li><strong>Volunteer role &amp; notes:</strong> to plan shifts and match interests.</li>
+              <li><strong>Medical info (optional):</strong> used <em>only</em> by event-day staff for safety. <strong>Never sent in confirmation emails.</strong> Never shared with the AI assistant.</li>
+            </ul>
+          </details>
+
+          <details>
+            <summary><strong>Where the data goes</strong></summary>
+            <ul>
+              <li>A <strong>private Google Sheet</strong> only GTA volunteer coordinators can see.</li>
+              <li>A <strong>confirmation email</strong> to you and your parent (no medical info included).</li>
+              <li>An <strong>AI assistant (Groq)</strong> may briefly process your <em>name, school, role, and notes</em> to write a personalized welcome and certificate. <strong>Medical info is never sent to the AI.</strong></li>
+              <li>Submissions over the internet are encrypted (HTTPS).</li>
+            </ul>
+          </details>
+
+          <details>
+            <summary><strong>How long we keep it &amp; your rights</strong></summary>
+            <ul>
+              <li>Records are kept for <strong>60 days after the event</strong>, then archived or deleted.</li>
+              <li>You can <strong>delete your registration any time</strong> using the "Delete my registration" link in your confirmation email.</li>
+              <li>You can email <a href="mailto:b.mallikarjun1@gmail.com">b.mallikarjun1@gmail.com</a> to request changes or copies of your data.</li>
+              <li>Parents can revoke consent at any time by emailing the GTA team.</li>
+            </ul>
+          </details>
+
+          <details>
+            <summary><strong>For volunteers under 13</strong></summary>
+            <p>This form requires <strong>parent or guardian consent</strong>, in line with US child-privacy guidelines (COPPA). The form must be filled out together with a parent or legal guardian. By checking the consent box below, the parent confirms they have read this notice and give permission.</p>
+          </details>
+        </div>
+
         <div class="field">
           <div class="checkbox-row">
             <input type="checkbox" id="parentConsent" name="parentConsent" required />
             <label for="parentConsent">
-              <strong>Parent/Guardian Consent (required):</strong> I confirm that I am the parent or legal guardian and I give permission for the student to volunteer at the GTA International Fest organized by the Global Telangana Association (GTA). I understand that GTA and event volunteers will take reasonable safety precautions, and I agree that my emergency contact information may be used during the event if needed.
+              <strong>Parent/Guardian Consent (required):</strong> I confirm that I am the parent or legal guardian, I have read the privacy notice above, and I give permission for the student to volunteer at the GTA International Fest organized by the Global Telangana Association (GTA). I understand that GTA and event volunteers will take reasonable safety precautions, and I agree that my emergency contact information may be used during the event if needed.
             </label>
           </div>
         </div>

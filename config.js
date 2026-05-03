@@ -12,12 +12,12 @@ const CONFIG = {
   // https://script.google.com/macros/s/AKfycb.../exec
   appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwvmsRNlEUVkU-pFadXzPabLsT1A1FS90JzLdrl9R1Ovqoubtz1gIveAJIwv1C6N39htw/exec',
 
-  // --- AI Chat Assistant (optional) ---
-  // Free Groq API key — get one at https://console.groq.com/keys
-  // Leave as 'YOUR_GROQ_KEY_HERE' to disable AI; chat will use built-in FAQ instead.
-  // Note: this key is visible in the browser. Use a Groq key with rate limits set,
-  // and rotate it if abused. Free tier costs nothing.
-  groqApiKey: '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',
+  // --- AI Chat Assistant ---
+  // LEGACY FIELD (no longer used by the browser) — kept for backward compatibility.
+  // AI calls are now PROXIED through the Apps Script (see GTA_CONFIG.groqApiKey
+  // in apps-script-backend.gs). The real Groq key lives only on the server.
+  // This value can be safely cleared. The browser ignores it.
+  groqApiKey: '',
 
   // School name shown in the QR poster (optional)
   schoolDisplayName: 'Our School'
