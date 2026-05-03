@@ -487,9 +487,12 @@
       border-top: 1px dashed rgba(0,0,0,0.08);
     }
 
-    /* Tab labels — slightly smaller on mobile to fit 3 */
+    /* Tab labels — shrink and tighten on mobile so 3 tabs (incl. "Volunteered Hours") fit side-by-side */
     @media (max-width: 480px) {
-      .tab { font-size: 13px; padding: 10px 4px; }
+      .tab { font-size: 12px; padding: 10px 4px; line-height: 1.2; }
+    }
+    @media (max-width: 360px) {
+      .tab { font-size: 11px; padding: 9px 3px; }
     }
 
     /* Chat peek-behind-the-curtain */
@@ -842,7 +845,7 @@
 
     <div class="tabs">
       <button class="tab active" id="tabRegister" type="button" onclick="switchView('register')">📝 Register</button>
-      <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Hours</button>
+      <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Volunteered Hours</button>
       <button class="tab" id="tabLearn" type="button" onclick="switchView('learn')">🤖 Ask AI</button>
     </div>
 
@@ -1079,7 +1082,7 @@
         </div>
 
         <div class="card">
-          <h2>2. Hours Volunteered</h2>
+          <h2>2. Volunteered Hours</h2>
           <div class="row">
             <div class="field">
               <label for="hoursCompleted">Total Hours Volunteered<span class="req">*</span></label>
