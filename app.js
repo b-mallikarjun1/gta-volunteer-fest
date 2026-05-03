@@ -40,22 +40,20 @@ function showToast(msg, isError = false) {
 
 /* ----------------------- Tab switching ----------------------- */
 function switchView(view) {
-  const registerView = document.getElementById('registerView');
-  const hoursView = document.getElementById('hoursView');
-  const tabRegister = document.getElementById('tabRegister');
-  const tabHours = document.getElementById('tabHours');
-
-  if (view === 'register') {
-    registerView.style.display = 'block';
-    hoursView.style.display = 'none';
-    tabRegister.classList.add('active');
-    tabHours.classList.remove('active');
-  } else {
-    registerView.style.display = 'none';
-    hoursView.style.display = 'block';
-    tabHours.classList.add('active');
-    tabRegister.classList.remove('active');
-  }
+  const views = {
+    register: document.getElementById('registerView'),
+    hours:    document.getElementById('hoursView'),
+    learn:    document.getElementById('learnView')
+  };
+  const tabs = {
+    register: document.getElementById('tabRegister'),
+    hours:    document.getElementById('tabHours'),
+    learn:    document.getElementById('tabLearn')
+  };
+  Object.keys(views).forEach((key) => {
+    if (views[key]) views[key].style.display = (key === view) ? 'block' : 'none';
+    if (tabs[key])  tabs[key].classList.toggle('active', key === view);
+  });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -369,6 +367,7 @@ hoursForm.addEventListener('submit', async (e) => {
       // Use the first name returned from the sheet (so PDF can personalize)
       payload.firstName = result.firstName || '';
       payload.activityName = result.activityName || '';
+      payload.appreciation = result.appreciation || '';
       generateHoursReceiptPDF(payload);
       hoursSuccessMsg.textContent = `Thanks${payload.firstName ? ' ' + payload.firstName : ''}! Your ${payload.hoursCompleted} hours have been logged in GTA's records. A confirmation email has been sent to you, and a PDF receipt has been downloaded for your community-service credit.`;
       hoursForm.style.display = 'none';
@@ -452,6 +451,28 @@ function generateHoursReceiptPDF(d) {
     y += 18;
   }
   y += 10;
+
+  // AI-generated personalized appreciation (centered framed quote)
+  if (d.appreciation && d.appreciation.trim()) {
+    const appreciationText = '"' + d.appreciation.replace(/\s+/g, ' ').trim() + '"';
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(11);
+    const appLines = doc.splitTextToSize(appreciationText, pageWidth - 160);
+    const blockHeight = appLines.length * 15 + 32;
+    // Cream background with gold left border
+    doc.setFillColor(255, 248, 236);
+    doc.roundedRect(60, y, pageWidth - 120, blockHeight, 6, 6, 'F');
+    doc.setFillColor(212, 164, 55);
+    doc.rect(60, y, 4, blockHeight, 'F');
+    doc.setTextColor(120, 53, 15);
+    doc.text(appLines, pageWidth / 2, y + 18, { align: 'center' });
+    // AI attribution
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(146, 116, 27);
+    doc.text('Personalized appreciation, written by AI based on your service.', pageWidth / 2, y + blockHeight - 8, { align: 'center' });
+    y += blockHeight + 18;
+  }
 
   // Notes
   if (d.notes && d.notes.trim()) {

@@ -401,6 +401,97 @@
       line-height: 1.5;
     }
 
+    /* "Ask AI about AI" learning tab */
+    .learn-intro h2 { color: var(--primary-dark); }
+    .learn-chat-card { padding: 0; overflow: hidden; }
+    .learn-messages {
+      min-height: 240px;
+      max-height: 460px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f8f9fb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .learn-msg {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+    .learn-msg.bot {
+      background: white;
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      border-top-left-radius: 4px;
+    }
+    .learn-msg.user {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-top-right-radius: 4px;
+    }
+    .learn-msg.typing {
+      background: white;
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .learn-starters {
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+      background: #f8f9fb;
+    }
+    .learn-starter {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .learn-starter:hover { background: var(--primary); color: white; }
+    .learn-input-row {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      background: white;
+    }
+    .learn-input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .learn-input-row button {
+      width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 20px;
+    }
+    .learn-peek-wrap {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0,0,0,0.08);
+    }
+
+    /* Tab labels — slightly smaller on mobile to fit 3 */
+    @media (max-width: 480px) {
+      .tab { font-size: 13px; padding: 10px 4px; }
+    }
+
     /* Chat peek-behind-the-curtain */
     .chat-peek-wrap {
       margin-top: 8px;
@@ -751,7 +842,8 @@
 
     <div class="tabs">
       <button class="tab active" id="tabRegister" type="button" onclick="switchView('register')">📝 Register</button>
-      <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Submit Hours</button>
+      <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Hours</button>
+      <button class="tab" id="tabLearn" type="button" onclick="switchView('learn')">🤖 Ask AI</button>
     </div>
 
     <div id="registerView">
@@ -1016,6 +1108,35 @@
       </div>
     </div>
 
+    <!-- ============ ASK AI ABOUT AI VIEW ============ -->
+    <div id="learnView" style="display: none;">
+      <div class="card learn-intro">
+        <h2 style="border: none; padding: 0; margin: 0 0 8px;">🤖 Ask AI about AI</h2>
+        <p style="margin: 0 0 8px; line-height: 1.5;">Curious how the AI in this app actually works? Or how to build something like it yourself? This is a separate AI tutor tuned to help you learn — no question too basic.</p>
+        <p class="helper" style="margin-top: 8px;">Pick a starter or type your own. Every reply has a 🔍 button so you can see exactly how the AI answered.</p>
+      </div>
+
+      <div class="learn-chat-card card">
+        <div id="learnMessages" class="learn-messages"></div>
+        <div id="learnStarters" class="learn-starters"></div>
+        <form id="learnForm" class="learn-input-row">
+          <input type="text" id="learnInput" placeholder="Ask anything about AI…" autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+
+      <div class="card" style="background: linear-gradient(135deg, #fff8ec, #fdf6e3); border-left: 4px solid var(--fest-gold);">
+        <h2 style="border: none; padding: 0; margin: 0 0 8px; color: #78350f;">Free places to keep learning</h2>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.7; color: #78350f;">
+          <li><a href="https://www.elementsofai.com/" target="_blank" rel="noopener">Elements of AI</a> — free 6-hour intro course (University of Helsinki)</li>
+          <li><a href="https://www.kaggle.com/learn" target="_blank" rel="noopener">Kaggle Learn</a> — free hands-on Python + ML mini-courses</li>
+          <li><a href="https://www.fast.ai/" target="_blank" rel="noopener">fast.ai</a> — free practical deep learning course</li>
+          <li><a href="https://huggingface.co/learn" target="_blank" rel="noopener">Hugging Face Learn</a> — free LLM/Transformers course</li>
+          <li><a href="https://www.youtube.com/@3blue1brown" target="_blank" rel="noopener">3Blue1Brown on YouTube</a> — beautiful videos on how neural networks work</li>
+        </ul>
+      </div>
+    </div>
+
   </main>
 
   <footer>
@@ -1050,5 +1171,6 @@
   <script src="app.js"></script>
   <script src="chat-assistant.js"></script>
   <script src="ai-features.js"></script>
+  <script src="ai-learn.js"></script>
 </body>
 </html>
