@@ -693,6 +693,10 @@
           <input type="text" id="activityNameOther" name="activityNameOther" placeholder="e.g., Photography, Translation, Setup help" />
         </div>
 
+        <p class="helper" style="font-style: italic; background: #fff8ec; padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--fest-gold); margin-top: -4px;">
+          Please note: final role assignments may be reshuffled closer to the event based on volunteer turnout and on-the-day needs. Thank you for your flexibility!
+        </p>
+
         <div class="field">
           <label for="organization">Event / Organization<span class="req">*</span></label>
           <input type="text" id="organization" name="organization" value="Global Telangana Association — GTA International Fest" required />
@@ -700,29 +704,37 @@
 
         <div class="row">
           <div class="field">
-            <label for="activityDate">Activity Date<span class="req">*</span></label>
-            <input type="date" id="activityDate" name="activityDate" required />
+            <label for="activityDateDisplay">Event Date</label>
+            <input type="text" id="activityDateDisplay" value="Saturday, June 6, 2026" readonly
+                   style="background: #fff8ec; cursor: not-allowed; color: var(--text); font-weight: 600; border-color: var(--fest-gold);" />
+            <input type="hidden" name="activityDate" value="2026-06-06" />
           </div>
           <div class="field">
-            <label for="hours">Hours Volunteered<span class="req">*</span></label>
-            <input type="number" id="hours" name="hours" min="0" step="0.25" required />
+            <label for="hours">Hours You Can Volunteer<span class="req">*</span></label>
+            <input type="number" id="hours" name="hours" min="0.5" step="0.5" required placeholder="e.g., 4" />
           </div>
         </div>
+        <p class="helper" style="background: #fff8ec; padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--fest-saffron); margin-top: -8px; margin-bottom: 14px;">
+          <strong>Volunteer hours:</strong> 11:00 AM – 8:00 PM EST. Your assigned shift will fall within this window.
+        </p>
 
         <div class="row">
           <div class="field">
-            <label for="supervisorName">Supervisor Name<span class="req">*</span></label>
-            <input type="text" id="supervisorName" name="supervisorName" required />
+            <label for="supervisorName">Supervisor Name <span class="helper" style="font-weight: 400;">(optional)</span></label>
+            <input type="text" id="supervisorName" name="supervisorName" placeholder="Leave blank if unknown" />
           </div>
           <div class="field">
-            <label for="supervisorContact">Supervisor Contact<span class="req">*</span></label>
-            <input type="text" id="supervisorContact" name="supervisorContact" placeholder="Email or phone" required />
+            <label for="supervisorContact">Supervisor Contact <span class="helper" style="font-weight: 400;">(optional)</span></label>
+            <input type="text" id="supervisorContact" name="supervisorContact" placeholder="Email or phone (optional)" />
           </div>
         </div>
+        <p class="helper" style="margin-top: -8px; margin-bottom: 14px;">
+          Don't worry if you don't know your supervisor yet — the GTA team will assign one before the event.
+        </p>
 
         <div class="field">
-          <label for="description">Description of Work Performed<span class="req">*</span></label>
-          <textarea id="description" name="description" required placeholder="Briefly describe what you did during this volunteer activity..."></textarea>
+          <label for="description">Description / Notes <span class="helper" style="font-weight: 400;">(optional)</span></label>
+          <textarea id="description" name="description" placeholder="Anything you'd like the GTA team to know? Languages you speak, special skills, friends you'd like to volunteer with, etc."></textarea>
         </div>
       </div>
 
