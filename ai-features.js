@@ -311,11 +311,12 @@ Pick the SINGLE best-fit role for them. Return ONLY a JSON object with exactly t
     { code: 'zh', label: '中文', flag: '🇨🇳' }
   ];
 
-  // Insert language picker below the banner
+  // Insert language picker below the banner — hidden until parent email is verified
   const main = document.querySelector('main');
   const picker = document.createElement('div');
   picker.id = 'langPicker';
   picker.className = 'lang-picker';
+  picker.style.display = 'none';
   picker.innerHTML = `
     <span style="font-size: 12px; color: var(--muted); margin-right: 6px;">🌐 Language:</span>
     ${LANGS.map(l => `<button type="button" data-lang="${l.code}" class="lang-btn${l.code === 'en' ? ' active' : ''}">${l.flag} ${l.label}</button>`).join('')}

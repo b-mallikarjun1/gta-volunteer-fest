@@ -167,6 +167,11 @@ function showToast(msg, isError = false) {
     if (appTabs)      appTabs.style.display = '';
     if (registerView) registerView.style.display = 'block';
     formEl.style.display = 'block';
+    // Reveal chat bubble + language picker (also gated)
+    const chatFab    = document.getElementById('chatFab');
+    const langPicker = document.getElementById('langPicker');
+    if (chatFab)    chatFab.style.display = '';
+    if (langPicker) langPicker.style.display = '';
 
     // Pre-fill and lock the parent email field
     const parentEmailField = document.getElementById('parentEmail');
