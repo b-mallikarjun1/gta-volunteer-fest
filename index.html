@@ -401,6 +401,109 @@
       line-height: 1.5;
     }
 
+    /* ============ VERIFICATION GATE ============ */
+    .verify-card { padding: 24px; }
+    .verify-card h2 { color: var(--fest-red); }
+    .verify-card button[type="button"]:not(.otp-link) {
+      width: 100%;
+      padding: 12px;
+      background: var(--fest-red);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .verify-card button[type="button"]:disabled { opacity: 0.6; cursor: not-allowed; }
+    .otp-banner {
+      background: #d1e7dd;
+      color: #0f5132;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+    .otp-input {
+      font-size: 22px !important;
+      letter-spacing: 8px;
+      text-align: center;
+      font-family: "Courier New", monospace !important;
+    }
+    .otp-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .otp-link {
+      width: auto !important;
+      background: transparent !important;
+      color: var(--primary) !important;
+      border: none !important;
+      padding: 4px 8px !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      cursor: pointer;
+      text-decoration: underline;
+      box-shadow: none !important;
+    }
+    .otp-link:disabled { opacity: 0.4; cursor: not-allowed; }
+    .verify-error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    .verified-badge {
+      background: #d1e7dd;
+      color: #0f5132;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ============ STUDENT-VOLUNTEER TOGGLE ============ */
+    .student-toggle-card {
+      background: linear-gradient(135deg, #fff8ec, #fdf6e3);
+      border: 1px solid var(--fest-gold);
+    }
+    .toggle-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .toggle-radio {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 0 !important;
+      font-weight: 500;
+      transition: border-color 0.15s;
+    }
+    .toggle-radio:hover { border-color: var(--fest-gold); }
+    .toggle-radio input[type="radio"] {
+      width: 18px !important;
+      height: 18px !important;
+      margin: 0 !important;
+      flex-shrink: 0;
+      accent-color: var(--fest-red);
+    }
+
     /* Privacy notice block above the consent checkbox */
     .privacy-notice {
       background: linear-gradient(135deg, #fff8ec, #fdf6e3);
@@ -885,9 +988,63 @@
     </div>
 
     <div id="registerView">
-    <form id="volunteerForm" novalidate>
+
+    <!-- ============ EMAIL VERIFICATION GATE ============ -->
+    <div id="verifyGate">
+      <div class="card verify-card">
+        <h2 style="border: none; padding: 0; margin: 0 0 8px;">🔒 Verify Parent's Email</h2>
+        <p style="margin: 0 0 12px; line-height: 1.55;">Before filling out the volunteer form, your parent or guardian needs to receive a one-time 6-digit code in their inbox. This is a quick check to confirm a parent is in the loop — required because all volunteers are minors.</p>
+
+        <!-- Step 1: enter parent email -->
+        <div id="verifyStep1">
+          <div class="field">
+            <label for="verifyEmailInput">Parent / Guardian Email<span class="req">*</span></label>
+            <input type="email" id="verifyEmailInput" required autocomplete="email" placeholder="e.g., parent@example.com" />
+          </div>
+          <button type="button" id="sendOtpBtn">Send verification code</button>
+          <p class="helper" style="margin-top: 10px;">A 6-digit code will be sent to this email. The code expires in 10 minutes.</p>
+        </div>
+
+        <!-- Step 2: enter the 6-digit code -->
+        <div id="verifyStep2" style="display: none;">
+          <div class="otp-banner">📧 Code sent to <strong id="verifyEmailDisplay"></strong>. Check inbox &amp; spam folder.</div>
+          <div class="field">
+            <label for="otpInput">Enter the 6-digit code<span class="req">*</span></label>
+            <input type="text" id="otpInput" inputmode="numeric" maxlength="6" pattern="[0-9]{6}"
+                   autocomplete="one-time-code" placeholder="000000" class="otp-input" />
+          </div>
+          <button type="button" id="verifyOtpBtn">Verify code</button>
+          <div class="otp-actions">
+            <button type="button" class="otp-link" id="resendOtpLink">↻ Resend code</button>
+            <button type="button" class="otp-link" id="changeEmailLink">← Use a different email</button>
+          </div>
+        </div>
+
+        <div id="verifyError" class="verify-error" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- Existing form (hidden until parent email is verified) -->
+    <form id="volunteerForm" novalidate style="display: none;">
+
+      <!-- ============ STUDENT VOLUNTEER TOGGLE ============ -->
+      <div class="card student-toggle-card">
+        <p style="margin: 0; font-size: 14px;"><strong>Are you a student volunteer?</strong></p>
+        <p class="helper" style="margin: 4px 0 0;">If yes, please fill the student information section. If no (e.g., parent or adult volunteer), you can skip section 1.</p>
+        <div class="toggle-options">
+          <label class="toggle-radio">
+            <input type="radio" name="isStudent" value="yes" checked onchange="toggleStudentSection()" />
+            <span>Yes — I'm a middle school or high school student</span>
+          </label>
+          <label class="toggle-radio">
+            <input type="radio" name="isStudent" value="no" onchange="toggleStudentSection()" />
+            <span>No — skip student details (adult / parent volunteer)</span>
+          </label>
+        </div>
+      </div>
+
       <!-- ============ SECTION 1: STUDENT INFO ============ -->
-      <div class="card">
+      <div class="card" id="studentInfoSection">
         <h2>1. Student Information</h2>
         <div class="row">
           <div class="field">
@@ -1057,6 +1214,9 @@
 
         <p class="helper" style="font-style: italic; background: #fff8ec; padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--fest-gold); margin-top: -4px;">
           Please note: final role assignments may be reshuffled closer to the event based on volunteer turnout and on-the-day needs. Thank you for your flexibility!
+        </p>
+        <p class="helper" style="background: #eff6ff; padding: 10px 12px; border-radius: 6px; border-left: 3px solid #185fa5; margin-top: 8px; color: #1e3a8a;">
+          ☂️ <strong>Outdoor event:</strong> The GTA International Fest is held outdoors. Please plan ahead — bring weather-appropriate clothing, comfortable walking shoes, sunscreen, a refillable water bottle, and an umbrella (sun or rain). A light jacket for the evening is also a good idea.
         </p>
 
         <div class="field">

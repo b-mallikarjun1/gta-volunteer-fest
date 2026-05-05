@@ -38,6 +38,170 @@ function showToast(msg, isError = false) {
   setTimeout(() => { toast.className = 'toast' + (isError ? ' error' : ''); }, 3500);
 }
 
+/* ============================================================
+   EMAIL VERIFICATION GATE — parent email OTP
+   --------------------------------------------------------------
+   On page load: if a verification token already exists in
+   sessionStorage, skip the gate. Otherwise: enter parent email →
+   send code → enter code → unlock the form. Verified email is
+   pre-filled and locked into the parentEmail field.
+   ============================================================ */
+(function setupVerifyGate() {
+  const verifyGate = document.getElementById('verifyGate');
+  const formEl = document.getElementById('volunteerForm');
+  if (!verifyGate || !formEl) return;
+
+  const sendOtpBtn       = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn     = document.getElementById('verifyOtpBtn');
+  const resendOtpLink    = document.getElementById('resendOtpLink');
+  const changeEmailLink  = document.getElementById('changeEmailLink');
+  const emailInput       = document.getElementById('verifyEmailInput');
+  const otpInput         = document.getElementById('otpInput');
+  const verifyEmailDisp  = document.getElementById('verifyEmailDisplay');
+  const verifyError      = document.getElementById('verifyError');
+  const step1            = document.getElementById('verifyStep1');
+  const step2            = document.getElementById('verifyStep2');
+
+  // Restore previous session if still valid
+  const savedToken = sessionStorage.getItem('gtaVerifiedToken');
+  const savedEmail = sessionStorage.getItem('gtaVerifiedEmail');
+  if (savedToken && savedEmail) {
+    showForm(savedEmail);
+    return;
+  }
+
+  function showError(msg) {
+    verifyError.textContent = msg || '';
+    verifyError.style.display = msg ? 'block' : 'none';
+  }
+
+  async function callBackend(action, payload) {
+    const res = await fetch(CONFIG.appsScriptUrl, {
+      method: 'POST', mode: 'cors', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action }, payload))
+    });
+    if (!res.ok) throw new Error('Network error (' + res.status + ')');
+    return res.json();
+  }
+
+  async function sendCode(email) {
+    showError('');
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.textContent = 'Sending…';
+    try {
+      const data = await callBackend('sendOtp', { email: email });
+      if (data.status !== 'ok') {
+        showError(data.message || 'Could not send code.');
+        return false;
+      }
+      verifyEmailDisp.textContent = email;
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      otpInput.focus();
+      return true;
+    } catch (err) {
+      showError('Network error. Please try again.');
+      return false;
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send verification code';
+    }
+  }
+
+  sendOtpBtn.addEventListener('click', () => {
+    const email = (emailInput.value || '').trim().toLowerCase();
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+    sendCode(email);
+  });
+
+  verifyOtpBtn.addEventListener('click', async () => {
+    const email = (emailInput.value || '').trim().toLowerCase();
+    const code = (otpInput.value || '').trim();
+    if (!/^\d{6}$/.test(code)) {
+      showError('Code must be 6 digits.');
+      return;
+    }
+    showError('');
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.textContent = 'Verifying…';
+    try {
+      const data = await callBackend('verifyOtp', { email: email, code: code });
+      if (data.status !== 'ok') {
+        showError(data.message || 'Verification failed.');
+        return;
+      }
+      sessionStorage.setItem('gtaVerifiedToken', data.verifiedToken);
+      sessionStorage.setItem('gtaVerifiedEmail', data.email);
+      showForm(data.email);
+    } catch (err) {
+      showError('Network error. Please try again.');
+    } finally {
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify code';
+    }
+  });
+
+  resendOtpLink.addEventListener('click', () => {
+    const email = (emailInput.value || '').trim().toLowerCase();
+    if (email) sendCode(email);
+  });
+
+  changeEmailLink.addEventListener('click', () => {
+    showError('');
+    step2.style.display = 'none';
+    step1.style.display = 'block';
+    otpInput.value = '';
+    emailInput.focus();
+  });
+
+  function showForm(email) {
+    verifyGate.style.display = 'none';
+    formEl.style.display = 'block';
+    // Pre-fill and lock the parent email field
+    const parentEmailField = document.getElementById('parentEmail');
+    if (parentEmailField) {
+      parentEmailField.value = email;
+      parentEmailField.readOnly = true;
+      parentEmailField.style.background = '#fff8ec';
+      parentEmailField.style.cursor = 'not-allowed';
+    }
+    // Add a verified badge at the top of the form
+    if (!document.getElementById('verifiedBadge')) {
+      const badge = document.createElement('div');
+      badge.id = 'verifiedBadge';
+      badge.className = 'verified-badge';
+      badge.innerHTML = '✓ <strong>Parent email verified:</strong> ' + email;
+      formEl.insertBefore(badge, formEl.firstChild);
+    }
+  }
+})();
+
+/* ============================================================
+   STUDENT-VOLUNTEER TOGGLE — show/hide section 1
+   ============================================================ */
+function toggleStudentSection() {
+  const isStudent = document.querySelector('input[name="isStudent"]:checked').value === 'yes';
+  const section = document.getElementById('studentInfoSection');
+  if (!section) return;
+  section.style.display = isStudent ? '' : 'none';
+  // When hidden, neutralize required attributes so the form can submit
+  section.querySelectorAll('input, select, textarea').forEach(el => {
+    if (!isStudent) {
+      if (el.required) {
+        el.dataset._wasRequired = 'true';
+        el.required = false;
+      }
+    } else if (el.dataset._wasRequired) {
+      el.required = true;
+      delete el.dataset._wasRequired;
+    }
+  });
+}
+
 /* ----------------------- Tab switching ----------------------- */
 function switchView(view) {
   const views = {
@@ -92,6 +256,12 @@ form.addEventListener('submit', async (e) => {
     data.activityName = 'Other: ' + data.activityNameOther;
   }
   delete data.activityNameOther;
+
+  // Attach the parent-email verification token for server-side validation
+  data._verifiedToken = sessionStorage.getItem('gtaVerifiedToken') || '';
+
+  // Note whether section 1 was filled (for the sheet)
+  data._isStudent = (document.querySelector('input[name="isStudent"]:checked') || {}).value || 'yes';
 
   // Add metadata
   data.submissionId = generateId();
