@@ -159,8 +159,15 @@ function showToast(msg, isError = false) {
   });
 
   function showForm(email) {
+    // Hide the gate
     verifyGate.style.display = 'none';
+    // Reveal the tab bar + the default (Register) view
+    const appTabs       = document.getElementById('appTabs');
+    const registerView  = document.getElementById('registerView');
+    if (appTabs)      appTabs.style.display = '';
+    if (registerView) registerView.style.display = 'block';
     formEl.style.display = 'block';
+
     // Pre-fill and lock the parent email field
     const parentEmailField = document.getElementById('parentEmail');
     if (parentEmailField) {
