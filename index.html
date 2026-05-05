@@ -1103,15 +1103,15 @@
         </div>
       </div>
 
-      <!-- ============ SECTION 2: PARENT/GUARDIAN ============ -->
+      <!-- ============ SECTION 2: PARENT/GUARDIAN OR ADULT CONSENT ============ -->
       <div class="card">
-        <h2>2. Parent / Guardian Consent</h2>
+        <h2 id="section2Title">2. Parent / Guardian Consent</h2>
         <div class="row">
           <div class="field">
-            <label for="parentName">Parent/Guardian Name<span class="req">*</span></label>
+            <label for="parentName" id="parentNameLabel">Parent/Guardian Name<span class="req">*</span></label>
             <input type="text" id="parentName" name="parentName" required />
           </div>
-          <div class="field">
+          <div class="field" id="parentRelationField">
             <label for="parentRelation">Relationship</label>
             <select id="parentRelation" name="parentRelation">
               <option value="">-- Select --</option>
@@ -1186,11 +1186,22 @@
           </details>
         </div>
 
-        <div class="field">
+        <!-- Parent consent — shown when "Yes — I'm a student" -->
+        <div class="field" id="parentConsentField">
           <div class="checkbox-row">
             <input type="checkbox" id="parentConsent" name="parentConsent" required />
             <label for="parentConsent">
               <strong>Parent/Guardian Consent (required):</strong> I confirm that I am the parent or legal guardian, I have read the privacy notice above, and I give permission for the student to volunteer at the GTA International Fest organized by the Global Telangana Association (GTA). I understand that GTA and event volunteers will take reasonable safety precautions, and I agree that my emergency contact information may be used during the event if needed.
+            </label>
+          </div>
+        </div>
+
+        <!-- Adult consent — shown when "No — adult / parent volunteer" -->
+        <div class="field" id="adultConsentField" style="display: none;">
+          <div class="checkbox-row">
+            <input type="checkbox" id="adultConsent" name="adultConsent" />
+            <label for="adultConsent">
+              <strong>Adult Volunteer Consent (required):</strong> I confirm I am 18 years or older, I have read and acknowledge the privacy notice above, and I agree to volunteer at the GTA International Fest organized by Global Telangana Association. I agree my emergency contact information may be used during the event if needed.
             </label>
           </div>
         </div>

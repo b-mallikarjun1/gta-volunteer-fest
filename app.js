@@ -193,25 +193,68 @@ function showToast(msg, isError = false) {
 })();
 
 /* ============================================================
-   STUDENT-VOLUNTEER TOGGLE — show/hide section 1
+   STUDENT-VOLUNTEER TOGGLE — drives Section 1 visibility AND
+   the Section 2 consent block (parent vs adult)
    ============================================================ */
 function toggleStudentSection() {
-  const isStudent = document.querySelector('input[name="isStudent"]:checked').value === 'yes';
-  const section = document.getElementById('studentInfoSection');
-  if (!section) return;
-  section.style.display = isStudent ? '' : 'none';
-  // When hidden, neutralize required attributes so the form can submit
-  section.querySelectorAll('input, select, textarea').forEach(el => {
-    if (!isStudent) {
-      if (el.required) {
-        el.dataset._wasRequired = 'true';
-        el.required = false;
+  const radio = document.querySelector('input[name="isStudent"]:checked');
+  const isStudent = !radio || radio.value === 'yes';
+
+  // ---- Section 1 (Student Information) visibility ----
+  const section1 = document.getElementById('studentInfoSection');
+  if (section1) {
+    section1.style.display = isStudent ? '' : 'none';
+    // When hidden, neutralize required attributes so the form can submit
+    section1.querySelectorAll('input, select, textarea').forEach(el => {
+      if (!isStudent) {
+        if (el.required) {
+          el.dataset._wasRequired = 'true';
+          el.required = false;
+        }
+      } else if (el.dataset._wasRequired) {
+        el.required = true;
+        delete el.dataset._wasRequired;
       }
-    } else if (el.dataset._wasRequired) {
-      el.required = true;
-      delete el.dataset._wasRequired;
-    }
-  });
+    });
+  }
+
+  // ---- Section 2 title ----
+  const section2Title = document.getElementById('section2Title');
+  if (section2Title) {
+    section2Title.textContent = isStudent
+      ? '2. Parent / Guardian Consent'
+      : '2. Adult Volunteer — Information & Consent';
+  }
+
+  // ---- Relationship field — only relevant for student/parent mode ----
+  const relationshipField = document.getElementById('parentRelationField');
+  if (relationshipField) relationshipField.style.display = isStudent ? '' : 'none';
+
+  // ---- Parent name label adapts to context ----
+  const parentNameLabel = document.getElementById('parentNameLabel');
+  if (parentNameLabel) {
+    parentNameLabel.innerHTML = isStudent
+      ? 'Parent/Guardian Name<span class="req">*</span>'
+      : 'Your Full Name<span class="req">*</span>';
+  }
+
+  // ---- Toggle parent consent vs adult consent ----
+  const parentConsentField = document.getElementById('parentConsentField');
+  const adultConsentField  = document.getElementById('adultConsentField');
+  const parentConsent      = document.getElementById('parentConsent');
+  const adultConsent       = document.getElementById('adultConsent');
+
+  if (isStudent) {
+    if (parentConsentField) parentConsentField.style.display = '';
+    if (adultConsentField)  adultConsentField.style.display  = 'none';
+    if (parentConsent) parentConsent.required = true;
+    if (adultConsent)  { adultConsent.required = false; adultConsent.checked = false; }
+  } else {
+    if (parentConsentField) parentConsentField.style.display = 'none';
+    if (adultConsentField)  adultConsentField.style.display  = '';
+    if (parentConsent) { parentConsent.required = false; parentConsent.checked = false; }
+    if (adultConsent)  adultConsent.required = true;
+  }
 }
 
 /* ----------------------- Tab switching ----------------------- */
