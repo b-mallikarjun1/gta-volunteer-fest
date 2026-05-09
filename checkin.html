@@ -242,7 +242,7 @@
   <form class="lock-card" id="lockForm">
     <div class="icon">🎫</div>
     <h2>GTA Volunteer Check-in</h2>
-    <p>For GTA admins. Enter the admin PIN, then your name (so we record who checked in each volunteer).</p>
+    <p id="lockSubtitle">For GTA admins. Enter the admin PIN, then your name (so we record who checked in each volunteer).</p>
     <input type="text" id="adminNameInput" placeholder="Your name (e.g., Priya)" autocomplete="name" />
     <input type="password" id="pinInput" class="pin" placeholder="Admin PIN" autocomplete="off" />
     <button type="submit">Unlock</button>
@@ -297,6 +297,19 @@
   let isProcessing = false;
   const recent = [];
 
+  // ---- Read ?token=... from URL (when admin opened via QR-scanned link) ----
+  let pendingToken = null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const t = urlParams.get('token');
+    if (t) {
+      pendingToken = t.trim().toUpperCase();
+      // Update lock-screen subtitle so admin knows what's about to happen
+      const sub = document.getElementById('lockSubtitle');
+      if (sub) sub.innerHTML = '<strong>You scanned a volunteer\'s QR code.</strong> Sign in to look them up and check them in.';
+    }
+  } catch (e) {}
+
   // ---- Lock screen ----
   document.getElementById('lockForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -330,6 +343,14 @@
     document.getElementById('adminMeta').textContent = '👤 ' + adminName;
     document.getElementById('adminFooter').textContent = adminName;
     initScanner();
+    // If admin arrived via a QR-scanned URL with ?token=..., auto-look up immediately
+    if (pendingToken) {
+      const tok = pendingToken;
+      pendingToken = null;
+      // Clean the URL so refresh doesn't re-trigger
+      try { history.replaceState({}, document.title, window.location.pathname); } catch (e) {}
+      setTimeout(() => { lookupAndShow(tok); }, 400);
+    }
   }
 
   function logout() {
