@@ -331,11 +331,38 @@ form.addEventListener('submit', async (e) => {
     generatePDFReport(data);
 
     // 2. Try to sync to Google Sheets (or queue if offline)
+    let didSync = false;
+    let serverErrorMsg = '';
+    let serverErrorCode = '';
+
     if (navigator.onLine && CONFIG.appsScriptUrl && !CONFIG.appsScriptUrl.includes('YOUR_APPS_SCRIPT_URL')) {
       try {
         await syncToSheet(data);
-        successMsg.textContent = '✅ Registration confirmed. A confirmation email has been sent to your registered email (and your parent has been CC\'d). Your PDF copy was also downloaded. The GTA team will be in touch with event details.';
+        didSync = true;
+        successMsg.textContent = '✅ Registration confirmed. A confirmation email has been sent to your registered email (parent CC\'d). Your PDF copy was also downloaded. The GTA team will be in touch with event details.';
       } catch (err) {
+        console.error('Sync error:', err);
+        serverErrorMsg = err.serverMessage || err.message || 'Unknown error';
+        serverErrorCode = err.code || '';
+
+        // Server returned an explicit error (NOT a network problem) → surface to user, do NOT pretend success
+        if (err.code) {
+          // Special handling for verification-expired: clear the verification and prompt re-verify
+          if (err.code === 'verification_expired') {
+            try {
+              sessionStorage.removeItem('gtaVerifiedToken');
+              sessionStorage.removeItem('gtaVerifiedEmail');
+            } catch (e) {}
+            showToast('Your parent-email verification expired. The page will reload so you can verify again.', true);
+            setTimeout(() => location.reload(), 3500);
+            return;
+          }
+          // Any other server-reported error: show the message, don't show success screen
+          showToast('❌ ' + serverErrorMsg, true);
+          return;
+        }
+
+        // No code → likely a true network failure. Queue for offline retry.
         queueSubmission(data);
         successMsg.textContent = '⚠️ Registration saved on your device. We could not reach GTA right now — it will be sent automatically once your connection is stable.';
       }
@@ -346,7 +373,7 @@ form.addEventListener('submit', async (e) => {
       successMsg.textContent = '📥 Registration saved on your device. It will be sent to the GTA team automatically once you are back online.';
     }
 
-    // Show success screen
+    // Show success screen (unless we already returned early on a server error)
     form.style.display = 'none';
     successScreen.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -470,8 +497,20 @@ async function syncToSheet(data) {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
-  return res.json().catch(() => ({}));
+  if (!res.ok) throw new Error('Sync failed: HTTP ' + res.status);
+
+  // Apps Script returns HTTP 200 even on errors — actual success/error is in
+  // the response BODY's status field. Don't treat HTTP 200 as success blindly.
+  let body = {};
+  try { body = await res.json(); } catch (e) {}
+
+  if (body.status === 'error') {
+    const err = new Error(body.message || 'Server returned an error');
+    err.code = body.code || 'server_error';   // e.g., 'verification_expired'
+    err.serverMessage = body.message || '';
+    throw err;
+  }
+  return body;
 }
 
 /* ----------------------- Offline queue (in-memory + IndexedDB) ----------------------- */
