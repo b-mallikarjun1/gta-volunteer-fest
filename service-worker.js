@@ -2,7 +2,7 @@
    Service Worker — caches app shell for offline use
    ============================================================ */
 
-const CACHE_NAME = 'volunteer-app-v17';
+const CACHE_NAME = 'volunteer-app-v18';
 const APP_SHELL = [
   './',
   './index.html',

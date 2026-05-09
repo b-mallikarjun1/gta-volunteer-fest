@@ -95,61 +95,138 @@ async function callGroq(messages, opts = {}) {
   let recognition;
   let isRecording = false;
 
+  // Pick the best recognition language for the audience. Indian English first,
+  // then user's browser locale, then US English.
+  function pickRecognitionLang() {
+    const browserLang = (navigator.language || 'en-US');
+    if (browserLang.startsWith('en')) return 'en-IN'; // GTA audience benefits from Indian English
+    return browserLang;
+  }
+
   function ensureRecognition() {
     if (recognition) return recognition;
     recognition = new SR();
-    recognition.lang = 'en-US';
+    recognition.lang = pickRecognitionLang();
     recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = true;   // show partial transcript while speaking
+    recognition.maxAlternatives = 3;
     return recognition;
+  }
+
+  // Map raw Speech API error codes to friendly, actionable messages
+  function friendlyErrorMessage(errCode) {
+    const map = {
+      'no-speech':            "🤐 I didn't hear anything. Tap and speak clearly when the button turns red.",
+      'audio-capture':        "🎤 No microphone detected. Check that your device's mic is connected and not muted.",
+      'not-allowed':          "🚫 Microphone access blocked. Click the lock icon in the address bar → allow microphone, then try again.",
+      'service-not-allowed':  "🚫 Microphone access blocked by your browser settings. Allow it and try again.",
+      'network':              "📡 Voice recognition needs internet. Check your connection and retry.",
+      'aborted':              "Stopped. Tap to try again.",
+      'language-not-supported': "🌐 Your browser doesn't support voice recognition. Chrome works best.",
+      'bad-grammar':          "Voice format error. Tap to try again."
+    };
+    return map[errCode] || ("Voice error (" + errCode + "). Tap to try again.");
   }
 
   let lastPromptUsed = '';
   let lastTranscript = '';
   let lastResponse = '';
+  let autoRetryAttempted = false;
 
-  btn.addEventListener('click', () => {
-    if (isRecording) return;
-    const r = ensureRecognition();
-    isRecording = true;
-    btn.classList.add('recording');
-    btn.querySelector('.lbl').textContent = '🔴 Listening… speak now';
+  // Pre-flight: warn if not on HTTPS (browsers block mic on http://)
+  if (location.protocol !== 'https:'
+      && location.hostname !== 'localhost'
+      && location.hostname !== '127.0.0.1') {
+    btn.disabled = true;
+    btn.querySelector('.lbl').textContent = '🎤 Voice needs HTTPS — host on GitHub Pages or Netlify';
+    btn.style.opacity = '0.6';
+    btn.title = 'Web browsers only allow microphone access on HTTPS sites or localhost.';
+    return;
+  }
 
-    r.start();
-    r.onresult = async (e) => {
-      const transcript = e.results[0][0].transcript;
-      lastTranscript = transcript;
-      btn.querySelector('.lbl').textContent = '🤖 Understanding…';
-      try {
-        const fields = await extractFields(transcript);
-        const filled = applyFields(fields);
-        btn.querySelector('.lbl').textContent = `✅ Filled ${filled} field${filled !== 1 ? 's' : ''} — review & submit`;
-        showToast?.(`AI heard you and filled ${filled} fields. Check them before submitting.`);
-      } catch (err) {
-        console.error(err);
-        btn.querySelector('.lbl').textContent = '❌ Could not parse — try again';
-      }
-      setTimeout(() => {
-        btn.querySelector('.lbl').textContent = '🎤 Speak to fill the form';
-        btn.classList.remove('recording');
-        isRecording = false;
-      }, 4000);
-    };
-    r.onerror = () => {
-      btn.querySelector('.lbl').textContent = '❌ Microphone error — check permissions';
+  function resetButton(delay) {
+    setTimeout(() => {
+      btn.querySelector('.lbl').textContent = '🎤 Speak to fill the form';
       btn.classList.remove('recording');
       isRecording = false;
-      setTimeout(() => {
-        btn.querySelector('.lbl').textContent = '🎤 Speak to fill the form';
-      }, 4000);
+    }, delay || 0);
+  }
+
+  function startListening() {
+    const r = ensureRecognition();
+    isRecording = true;
+    autoRetryAttempted = false;
+    btn.classList.add('recording');
+    btn.querySelector('.lbl').textContent = '🔴 Listening… speak now (name, school, parent, role…)';
+
+    try {
+      r.start();
+    } catch (e) {
+      // Already started — abort and restart
+      try { r.abort(); r.start(); } catch (ee) { console.warn(ee); }
+    }
+
+    r.onresult = async (e) => {
+      // Walk results — show interim, process when final
+      let interim = '';
+      let final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        if (res.isFinal) final += res[0].transcript;
+        else interim += res[0].transcript;
+      }
+      if (interim && !final) {
+        // Live preview while user is still speaking
+        const preview = interim.length > 60 ? interim.substring(0, 60) + '…' : interim;
+        btn.querySelector('.lbl').textContent = '🎙 "' + preview + '"';
+        return;
+      }
+      if (!final) return;
+
+      lastTranscript = final;
+      btn.querySelector('.lbl').textContent = '🤖 Understanding "' + (final.length > 40 ? final.substring(0, 40) + '…' : final) + '"';
+      try {
+        const fields = await extractFields(final);
+        const filled = applyFields(fields);
+        btn.querySelector('.lbl').textContent = '✅ Filled ' + filled + ' field' + (filled !== 1 ? 's' : '') + ' — review & submit';
+        if (typeof showToast === 'function') {
+          showToast('AI heard you and filled ' + filled + ' fields. Check them before submitting.');
+        }
+      } catch (err) {
+        console.error('Voice extract error:', err);
+        btn.querySelector('.lbl').textContent = '❌ Could not parse what was heard — try speaking more slowly';
+      }
+      resetButton(4500);
     };
+
+    r.onerror = (e) => {
+      const errCode = (e && e.error) || 'unknown';
+      console.warn('Speech recognition error:', errCode);
+
+      // Auto-retry once on "no-speech" (user might have been startled by the button color change)
+      if (errCode === 'no-speech' && !autoRetryAttempted) {
+        autoRetryAttempted = true;
+        btn.querySelector('.lbl').textContent = '🤐 Didn\'t hear you — listening again, speak now';
+        try { r.start(); } catch (ee) { resetButton(0); }
+        return;
+      }
+
+      btn.querySelector('.lbl').textContent = friendlyErrorMessage(errCode);
+      resetButton(5500);
+    };
+
     r.onend = () => {
+      // If we're still flagged as recording and no final result came, the API ended quietly
       if (isRecording) {
         btn.classList.remove('recording');
         isRecording = false;
       }
     };
+  }
+
+  btn.addEventListener('click', () => {
+    if (isRecording) return;
+    startListening();
   });
 
   // Peek behind the curtain
