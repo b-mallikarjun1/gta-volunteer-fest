@@ -386,12 +386,43 @@
   // ---- QR Scanner ----
   function initScanner() {
     if (scanner) return;
-    scanner = new Html5QrcodeScanner('qr-reader', {
-      fps: 10,
-      qrbox: { width: 240, height: 240 },
+    // Tuned for FAST QR scanning:
+    //   - 25 fps (more decode attempts per second)
+    //   - useBarCodeDetectorIfSupported uses the browser's NATIVE BarcodeDetector
+    //     when available (Chrome on Android = ~10× faster than the JS fallback)
+    //   - formatsToSupport limits to QR_CODE only (skips ~12 other barcode formats
+    //     so the decoder doesn't waste time trying them)
+    //   - facingMode 'environment' forces the back camera by default
+    //   - Higher resolution videoConstraints help with small/distant QRs
+    //   - disableFlip skips trying mirrored variants (faster)
+    const config = {
+      fps: 25,
+      qrbox: function(viewW, viewH) {
+        // Big square scan area — bigger box catches QR codes faster
+        const minDim = Math.min(viewW, viewH);
+        const size = Math.floor(minDim * 0.75);
+        return { width: size, height: size };
+      },
+      aspectRatio: 1.0,
+      disableFlip: true,
       rememberLastUsedCamera: true,
-      supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-    }, false);
+      showTorchButtonIfSupported: true,
+      supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+      videoConstraints: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      // Prefer native BarcodeDetector API when available — much faster on modern Chrome/Edge
+      useBarCodeDetectorIfSupported: true
+    };
+
+    // Limit to QR codes only (where the constant exists in this html5-qrcode build)
+    if (typeof Html5QrcodeSupportedFormats !== 'undefined' && Html5QrcodeSupportedFormats.QR_CODE !== undefined) {
+      config.formatsToSupport = [Html5QrcodeSupportedFormats.QR_CODE];
+    }
+
+    scanner = new Html5QrcodeScanner('qr-reader', config, false);
     scanner.render(onScanSuccess, onScanError);
   }
 
