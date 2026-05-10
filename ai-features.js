@@ -36,7 +36,9 @@ function hasGroqKey() {
 }
 
 async function callGroq(messages, opts = {}) {
-  const res = await fetch(CONFIG.appsScriptUrl, {
+  // Uses the global fetchWithRetry from app.js (retries on weak networks).
+  const fetcher = (typeof fetchWithRetry === 'function') ? fetchWithRetry : fetch;
+  const res = await fetcher(CONFIG.appsScriptUrl, {
     method: 'POST',
     mode: 'cors',
     redirect: 'follow',
@@ -48,7 +50,7 @@ async function callGroq(messages, opts = {}) {
       temperature: opts.temperature ?? 0.2,
       maxTokens: opts.max_tokens ?? 400
     })
-  });
+  }, { maxAttempts: 2, timeoutMs: 25000 });
   if (!res.ok) throw new Error('Proxy: ' + res.status);
   const data = await res.json();
   if (data.status !== 'ok') throw new Error(data.message || 'Proxy returned error');

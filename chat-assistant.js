@@ -225,7 +225,7 @@ async function askGroq(userMessage) {
 
   // Calls the GTA Apps Script proxy, which forwards to Groq using a server-side key.
   // The Groq API key is NOT in the browser anymore.
-  const res = await fetch(CONFIG.appsScriptUrl, {
+  const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
     method: 'POST',
     mode: 'cors',
     redirect: 'follow',
@@ -237,7 +237,7 @@ async function askGroq(userMessage) {
       temperature: 0.5,
       maxTokens: 220
     })
-  });
+  }, { maxAttempts: 2, timeoutMs: 25000 });
   if (!res.ok) throw new Error('Proxy: ' + res.status);
   const data = await res.json();
   if (data.status !== 'ok') throw new Error(data.message || 'Proxy error');

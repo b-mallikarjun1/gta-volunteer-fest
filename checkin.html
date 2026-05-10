@@ -372,13 +372,40 @@
     }
   });
 
+  // ---- Robust fetch (timeout + retry + exponential backoff for weak networks) ----
+  async function fetchWithRetry(url, options, opts) {
+    opts = opts || {};
+    const maxAttempts = opts.maxAttempts || 3;
+    const timeoutMs   = opts.timeoutMs   || 25000;
+    const baseDelay   = opts.baseDelay   || 1000;
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      let timeoutId;
+      try {
+        const controller = new AbortController();
+        timeoutId = setTimeout(function() { controller.abort(); }, timeoutMs);
+        const res = await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+        clearTimeout(timeoutId);
+        if (res.ok || (res.status >= 400 && res.status < 500)) return res;
+        lastError = new Error('Server returned HTTP ' + res.status);
+      } catch (err) {
+        if (timeoutId) clearTimeout(timeoutId);
+        lastError = err;
+      }
+      if (attempt < maxAttempts) {
+        await new Promise(function(r) { setTimeout(r, baseDelay * Math.pow(2, attempt - 1)); });
+      }
+    }
+    throw lastError || new Error('Network failed after ' + maxAttempts + ' attempts');
+  }
+
   // ---- Backend ----
   async function callBackend(action, payload) {
-    const res = await fetch(CONFIG.appsScriptUrl, {
+    const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST', mode: 'cors', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action }, payload))
-    });
+    }, { maxAttempts: 3, timeoutMs: 25000 });
     if (!res.ok) throw new Error('Network error (' + res.status + ')');
     return res.json();
   }

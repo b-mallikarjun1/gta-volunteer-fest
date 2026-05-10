@@ -6,6 +6,57 @@
    - Queues submissions when offline; auto-resyncs when back online
    ============================================================ */
 
+/* ============================================================
+   ROBUST FETCH — timeout + retry with exponential backoff
+   --------------------------------------------------------------
+   Real networks misbehave: weak Wi-Fi, 4G drops, slow 3G. This
+   helper wraps fetch() with:
+     • 30s timeout per attempt (via AbortController)
+     • Up to 3 attempts (configurable)
+     • Exponential backoff: 1s, 2s, 4s between retries
+     • Retries on network failures + 5xx server errors
+     • Does NOT retry on 4xx (those are client errors that won't
+       improve by retrying)
+   Used by every Apps Script call across the app.
+   ============================================================ */
+async function fetchWithRetry(url, options, opts) {
+  opts = opts || {};
+  const maxAttempts = opts.maxAttempts || 3;
+  const timeoutMs   = opts.timeoutMs   || 30000;
+  const baseDelay   = opts.baseDelay   || 1000;
+
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let timeoutId;
+    try {
+      const controller = new AbortController();
+      timeoutId = setTimeout(function() { controller.abort(); }, timeoutMs);
+
+      const fetchOpts = Object.assign({}, options, { signal: controller.signal });
+      const res = await fetch(url, fetchOpts);
+      clearTimeout(timeoutId);
+
+      // Success or 4xx (client error — don't retry, won't get better)
+      if (res.ok || (res.status >= 400 && res.status < 500)) {
+        return res;
+      }
+      // 5xx — server error, retry
+      lastError = new Error('Server returned HTTP ' + res.status);
+    } catch (err) {
+      if (timeoutId) clearTimeout(timeoutId);
+      lastError = err;
+      // AbortError = timeout. TypeError = network down. Both retryable.
+    }
+
+    if (attempt < maxAttempts) {
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      await new Promise(function(r) { setTimeout(r, delay); });
+    }
+  }
+
+  throw lastError || new Error('Network request failed after ' + maxAttempts + ' attempts');
+}
+
 const form = document.getElementById('volunteerForm');
 const submitBtn = document.getElementById('submitBtn');
 const toast = document.getElementById('toast');
@@ -76,11 +127,11 @@ function showToast(msg, isError = false) {
   }
 
   async function callBackend(action, payload) {
-    const res = await fetch(CONFIG.appsScriptUrl, {
+    const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST', mode: 'cors', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action }, payload))
-    });
+    }, { maxAttempts: 3, timeoutMs: 25000 });
     if (!res.ok) throw new Error('Network error (' + res.status + ')');
     return res.json();
   }
@@ -489,14 +540,15 @@ function generatePDFReport(d) {
 
 /* ----------------------- Google Sheets sync ----------------------- */
 async function syncToSheet(data) {
-  // Apps Script web apps require text/plain (no preflight) for cross-origin POST
-  const res = await fetch(CONFIG.appsScriptUrl, {
+  // Apps Script web apps require text/plain (no preflight) for cross-origin POST.
+  // fetchWithRetry handles timeouts, transient failures, and weak networks automatically.
+  const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
     method: 'POST',
     mode: 'cors',
     redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(data)
-  });
+  }, { maxAttempts: 3, timeoutMs: 30000 });
   if (!res.ok) throw new Error('Sync failed: HTTP ' + res.status);
 
   // Apps Script returns HTTP 200 even on errors — actual success/error is in
@@ -617,13 +669,13 @@ hoursForm.addEventListener('submit', async (e) => {
       throw new Error('You appear to be offline. Try again when you have a connection.');
     }
 
-    const res = await fetch(CONFIG.appsScriptUrl, {
+    const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST',
       mode: 'cors',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
-    });
+    }, { maxAttempts: 3, timeoutMs: 30000 });
 
     const result = await res.json().catch(() => ({}));
 
@@ -770,6 +822,21 @@ function generateHoursReceiptPDF(d) {
   const safeName = (s) => (s || '').replace(/[^a-z0-9]/gi, '');
   doc.save(`GTA_Volunteer_Hours_${safeName(d.lastName)}_${safeName(d.firstName) || 'Receipt'}.pdf`);
 }
+
+/* ============================================================
+   PERIODIC QUEUE FLUSH — belt-and-suspenders for flaky networks
+   --------------------------------------------------------------
+   The 'online' event fires when the device transitions from
+   offline → online. But on intermittent 4G/5G or weak Wi-Fi, the
+   browser may not always fire the event reliably. So in addition,
+   we poll every 30 seconds: if there are queued submissions and
+   we're online, try to flush them.
+   ============================================================ */
+setInterval(function() {
+  if (navigator.onLine) {
+    flushQueue().catch(function(e) { console.warn('Periodic flush skipped:', e); });
+  }
+}, 30000);
 
 /* ----------------------- Service worker (PWA) ----------------------- */
 if ('serviceWorker' in navigator) {
