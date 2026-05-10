@@ -404,7 +404,8 @@
     const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST', mode: 'cors', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action: action }, payload))
+      body: JSON.stringify(Object.assign({ action: action }, payload)),
+      keepalive: true   // mobile: complete request even if admin locks the screen mid-checkin
     }, { maxAttempts: 3, timeoutMs: 25000 });
     if (!res.ok) throw new Error('Network error (' + res.status + ')');
     return res.json();

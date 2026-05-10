@@ -130,7 +130,8 @@ function showToast(msg, isError = false) {
     const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST', mode: 'cors', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action: action }, payload))
+      body: JSON.stringify(Object.assign({ action: action }, payload)),
+      keepalive: true   // mobile: complete OTP request even if app backgrounds
     }, { maxAttempts: 3, timeoutMs: 25000 });
     if (!res.ok) throw new Error('Network error (' + res.status + ')');
     return res.json();
@@ -547,7 +548,8 @@ async function syncToSheet(data) {
     mode: 'cors',
     redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
+    keepalive: true   // mobile: finish request even if user closes the page mid-submit
   }, { maxAttempts: 3, timeoutMs: 30000 });
   if (!res.ok) throw new Error('Sync failed: HTTP ' + res.status);
 
@@ -674,7 +676,8 @@ hoursForm.addEventListener('submit', async (e) => {
       mode: 'cors',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      keepalive: true   // mobile: don't lose hours submission if user switches apps
     }, { maxAttempts: 3, timeoutMs: 30000 });
 
     const result = await res.json().catch(() => ({}));
