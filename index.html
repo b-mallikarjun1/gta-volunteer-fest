@@ -360,6 +360,25 @@
       line-height: 1.5;
       color: var(--text);
     }
+    .mic-note {
+      flex-basis: 100%;
+      margin: 6px 0 0;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.35;
+    }
+    .submit-note {
+      margin: 12px 0 0;
+      padding: 10px 14px;
+      background: #fff8ec;
+      border: 1px solid var(--fest-gold);
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: #78350f;
+      text-align: center;
+      line-height: 1.5;
+    }
     .ai-peek-panel pre {
       max-height: 200px;
       overflow: auto;
@@ -1040,7 +1059,7 @@
     <div id="verifyGate">
       <div class="card verify-card">
         <h2 style="border: none; padding: 0; margin: 0 0 8px;">🔒 Verify Parent's Email to Continue</h2>
-        <p style="margin: 0 0 12px; line-height: 1.55;">Welcome! Before you can register, log volunteer hours, or use the AI assistant, your parent or guardian needs to receive a one-time 6-digit code in their inbox. This is a quick check to confirm a parent is in the loop — required because all volunteers are minors.</p>
+        <p style="margin: 0 0 12px; line-height: 1.55;">Welcome! Before you can register, log volunteer hours, or use the AI assistant, your parent or guardian needs to receive a one-time 6-digit code in their inbox <strong>(also check the spam / junk folder)</strong>. This is a quick check to confirm a parent is in the loop — required because all volunteers are minors.</p>
 
         <!-- Step 1: enter parent email -->
         <div id="verifyStep1">
@@ -1049,7 +1068,7 @@
             <input type="email" id="verifyEmailInput" required autocomplete="email" placeholder="e.g., parent@example.com" />
           </div>
           <button type="button" id="sendOtpBtn">Send verification code</button>
-          <p class="helper" style="margin-top: 10px;">A 6-digit code will be sent to this email. The code expires in 10 minutes.</p>
+          <p class="helper" style="margin-top: 10px;">A 6-digit code will be sent to this email. The code expires in 10 minutes — <strong>check spam / junk folder if you don't see it within a minute.</strong></p>
         </div>
 
         <!-- Step 2: enter the 6-digit code -->
@@ -1351,6 +1370,7 @@
       </div>
 
       <button type="submit" id="submitBtn">Submit Form &amp; Generate Report</button>
+      <p class="submit-note">📧 After submitting, please check your <strong>spam / junk folder</strong> if you don't see the confirmation email within a few minutes.</p>
     </form>
 
     <!-- Success screen shown after submission -->

@@ -72,6 +72,7 @@ async function callGroq(messages, opts = {}) {
     </button>
     <button type="button" id="voicePeekBtn" class="ai-peek-btn" title="How does this work?">🔍</button>
     <div id="voicePeekPanel" class="ai-peek-panel" hidden></div>
+    <p class="mic-note">📱 Allow mic access when prompted (Chrome / Safari · works on phones too).</p>
   `;
   targetForm.insertBefore(wrap, targetForm.firstChild);
 
