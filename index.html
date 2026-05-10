@@ -96,6 +96,53 @@
       .fest-ornament .flame { animation: none; }
     }
 
+    /* ============ NEW: GTA Atlanta banner image header ============ */
+    header.banner-with-image {
+      padding: 0 !important;
+      background: white !important;
+      background-image: none !important;
+      color: inherit;
+    }
+    header.banner-with-image::after { display: none !important; }
+    .gta-banner-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      margin: 0;
+    }
+    .banner-subtitle {
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2.2' fill='%23ffffff' fill-opacity='0.32'/%3E%3Ccircle cx='45' cy='45' r='12' fill='none' stroke='%23ffffff' stroke-opacity='0.16' stroke-width='0.7'/%3E%3C/svg%3E"),
+        linear-gradient(135deg, #c1272d 0%, #ff6b35 50%, #d4a437 100%);
+      background-size: 90px 90px, cover;
+      padding: 16px 16px 24px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(193, 39, 45, 0.28);
+    }
+    .banner-subtitle .reg-tagline {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 5px;
+      color: #ffffff;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+    .banner-subtitle::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 12px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='12' viewBox='0 0 28 12'%3E%3Cpath d='M0,0 L14,12 L28,0 Z' fill='%23d4a437'/%3E%3Ccircle cx='14' cy='10' r='1.6' fill='%23fff8ec'/%3E%3C/svg%3E");
+      background-size: 28px 12px;
+      background-repeat: repeat-x;
+    }
+    @media (max-width: 480px) {
+      .banner-subtitle .reg-tagline { font-size: 14px; letter-spacing: 3px; }
+      .banner-subtitle { padding: 12px 12px 20px; }
+    }
+
     header h1 {
       margin: 0;
       font-size: 26px;
@@ -887,9 +934,14 @@
   </style>
 </head>
 <body>
-  <header>
-    <!-- International mela ornament: festival arch with globe, diyas, and bunting flags -->
-    <svg class="fest-ornament" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg" aria-label="International festival ornament" role="img">
+  <header class="banner-with-image">
+    <!-- Official GTA Atlanta banner image (save the GTA banner as gta-banner.png in this folder) -->
+    <img src="gta-banner.png" alt="Global Telangana Association — Atlanta" class="gta-banner-img" />
+    <div class="banner-subtitle">
+      <p class="reg-tagline">✦ &nbsp;VOLUNTEER REGISTRATION&nbsp; ✦</p>
+    </div>
+    <!-- Hidden — kept temporarily so existing CSS selectors don't break; will be removed when scripts no longer reference it -->
+    <svg class="fest-ornament" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg" aria-label="International festival ornament" role="img" style="display:none;">
       <!-- Bunting string arcing across the top -->
       <path d="M6 16 Q80 4 154 16" stroke="#d4a437" stroke-width="0.8" fill="none"/>
 
