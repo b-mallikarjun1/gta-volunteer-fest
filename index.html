@@ -1065,6 +1065,9 @@
           </div>
           <button type="button" id="sendOtpBtn">Send verification code</button>
           <p class="helper" style="margin-top: 10px;">A 6-digit code will be sent to this email. The code expires in 10 minutes — <strong>check spam / junk folder if you don't see it within a minute.</strong></p>
+          <p class="helper" style="margin-top: 6px; padding: 8px 10px; background: #fff8ec; border-left: 3px solid var(--fest-saffron); border-radius: 4px; color: #78350f;">
+            ⚠️ <strong>Please use a personal email</strong> — Gmail, Yahoo, iCloud, or Outlook personal. <strong>Do not use a school email</strong> (.edu, .k12, district domains, etc.) — schools block our confirmation messages.
+          </p>
         </div>
 
         <!-- Step 2: enter the 6-digit code -->
@@ -1161,13 +1164,14 @@
         <div class="row">
           <div class="field">
             <label for="studentEmail">Student Email <span class="helper" style="font-weight: 400;">(optional)</span></label>
-            <input type="email" id="studentEmail" name="studentEmail" autocomplete="email" placeholder="Optional — confirmation goes to parent email" />
+            <input type="email" id="studentEmail" name="studentEmail" autocomplete="email" placeholder="Personal email only (not school)" />
           </div>
           <div class="field">
             <label for="studentPhone">Student Phone <span class="helper" style="font-weight: 400;">(optional)</span></label>
             <input type="tel" id="studentPhone" name="studentPhone" autocomplete="tel" placeholder="Optional" />
           </div>
         </div>
+        <p class="helper" style="margin-top: -6px;">⚠️ If you fill in Student Email, please use a <strong>personal</strong> account (Gmail, Yahoo, etc.) — school addresses block our messages.</p>
       </div>
 
       <!-- ============ SECTION 2: PARENT/GUARDIAN OR ADULT CONSENT ============ -->

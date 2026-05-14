@@ -7,6 +7,27 @@
    ============================================================ */
 
 /* ============================================================
+   SCHOOL EMAIL DETECTOR — keep school addresses out of the form.
+   School districts (Forsyth, Gwinnett, etc.) block our automated
+   confirmation emails, so we ask parents to use a personal email.
+   Mirrors the server-side check in apps-script-backend.gs.
+   ============================================================ */
+function isSchoolEmail(s) {
+  const e = String(s || '').toLowerCase().trim();
+  if (!e) return false;
+  return [
+    /\.edu$/, /\.edu\./, /\.k12\./,
+    /\.ac\.[a-z]{2,3}$/, /\.sch\.[a-z]{2,3}$/,
+    /onmicrosoft\.com$/,
+    /\bforsyth/i, /\bgwinnett/i,
+    /\bcobb\b.*\b(k12|school|edu)/i,
+    /\bfulton\b.*\b(k12|school|edu)/i,
+    /\bfcps/i, /studentmail\./i
+  ].some(function(p) { return p.test(e); });
+}
+const SCHOOL_EMAIL_MSG = 'School email addresses (.edu, .k12, onmicrosoft.com, district domains, etc.) often block our confirmation emails. Please use a personal email — Gmail, Yahoo, iCloud, or Outlook personal all work great.';
+
+/* ============================================================
    ROBUST FETCH — timeout + retry with exponential backoff
    --------------------------------------------------------------
    Real networks misbehave: weak Wi-Fi, 4G drops, slow 3G. This
@@ -165,6 +186,10 @@ function showToast(msg, isError = false) {
     const email = (emailInput.value || '').trim().toLowerCase();
     if (!email || !email.includes('@') || !email.includes('.')) {
       showError('Please enter a valid email address.');
+      return;
+    }
+    if (isSchoolEmail(email)) {
+      showError(SCHOOL_EMAIL_MSG);
       return;
     }
     sendCode(email);
@@ -363,6 +388,14 @@ form.addEventListener('submit', async (e) => {
     data.activityName = 'Other: ' + data.activityNameOther;
   }
   delete data.activityNameOther;
+
+  // Reject school email addresses (they block our confirmation emails)
+  if (isSchoolEmail(data.studentEmail) || isSchoolEmail(data.parentEmail)) {
+    showToast(SCHOOL_EMAIL_MSG, true);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Form & Generate Report';
+    return;
+  }
 
   // Attach the parent-email verification token for server-side validation
   data._verifiedToken = sessionStorage.getItem('gtaVerifiedToken') || '';
