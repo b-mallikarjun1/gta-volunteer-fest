@@ -3,34 +3,32 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GTA International Fest — Volunteer With Us</title>
+<title>GTA International Fest 2026 — Volunteer With Us</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  /* ===== Page setup — sized for Instagram/Facebook portrait posts ===== */
   :root {
-    --fest-red: #c1272d;
-    --fest-red-dark: #8b0e1a;
-    --fest-saffron: #ff6b35;
-    --fest-marigold: #f9b233;
-    --fest-gold: #d4a437;
-    --fest-magenta: #b53075;
-    --fest-green: #198754;
-    --fest-blue: #185fa5;
+    --r: #c1272d;       /* festival red */
+    --r-dark: #7a0c16;
+    --s: #ff6b35;       /* saffron */
+    --m: #f9b233;       /* marigold */
+    --g: #d4a437;       /* gold */
+    --p: #b53075;       /* magenta */
+    --gr: #198754;      /* green */
+    --bl: #185fa5;      /* blue */
     --cream: #fff8ec;
-    --cream-deep: #fdf6e3;
-    --text-dark: #4a1b0c;
-    --text-warm: #78350f;
+    --ivory: #fdf6e3;
+    --ink: #4a1b0c;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    background: #4a1b0c;
+  body {
+    background: #2a0d04;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text-dark);
+    color: var(--ink);
     -webkit-font-smoothing: antialiased;
     padding: 24px 8px;
   }
 
-  /* ===== Flyer canvas — 1080 x 1350 (Instagram 4:5 portrait) ===== */
+  /* ===== Flyer canvas — 1080 x 1500 (Instagram portrait + room for collage) ===== */
   .flyer {
     width: 1080px;
     max-width: 100%;
@@ -38,249 +36,259 @@
     background: var(--cream);
     background-image:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='2' fill='%23d4a437' fill-opacity='0.20'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%23d4a437' stroke-opacity='0.10' stroke-width='0.6'/%3E%3Ccircle cx='8' cy='8' r='1.4' fill='%23c1272d' fill-opacity='0.16'/%3E%3Ccircle cx='52' cy='52' r='1.4' fill='%23c1272d' fill-opacity='0.16'/%3E%3C/svg%3E");
-    box-shadow: 0 30px 90px rgba(0,0,0,0.5);
+    box-shadow: 0 30px 100px rgba(0,0,0,0.55);
     position: relative;
     overflow: hidden;
   }
 
   /* ===== Top torana (festive bunting) ===== */
-  .torana-top {
+  .torana {
     height: 28px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28' viewBox='0 0 40 28'%3E%3Cpath d='M0 0 L20 28 L40 0 Z' fill='%23c1272d'/%3E%3Cpath d='M3 0 L20 24 L37 0 Z' fill='%23ff6b35'/%3E%3Ccircle cx='20' cy='25' r='2.4' fill='%23d4a437'/%3E%3C/svg%3E");
     background-size: 40px 28px;
     background-repeat: repeat-x;
   }
 
-  /* ===== Hero band ===== */
+  /* ===== Banner image (the official GTA Atlanta banner) ===== */
+  .banner-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    background: white;
+  }
+  /* ===== Headline strip below the banner — call-to-action on red/saffron ===== */
   .hero {
-    padding: 36px 56px 30px;
-    background: linear-gradient(135deg, var(--fest-red) 0%, var(--fest-saffron) 50%, var(--fest-marigold) 100%);
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2.2' fill='%23ffffff' fill-opacity='0.30'/%3E%3Ccircle cx='45' cy='45' r='14' fill='none' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.7'/%3E%3Ccircle cx='45' cy='45' r='26' fill='none' stroke='%23ffffff' stroke-opacity='0.10' stroke-width='0.5'/%3E%3C/svg%3E"),
-      linear-gradient(135deg, #c1272d 0%, #e94e1b 28%, #ff6b35 50%, #f9b233 78%, #d4a437 100%);
+    padding: 22px 50px 22px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2.2' fill='%23ffffff' fill-opacity='0.30'/%3E%3Ccircle cx='45' cy='45' r='14' fill='none' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.7'/%3E%3C/svg%3E"),
+      linear-gradient(135deg, #c1272d 0%, #e94e1b 30%, #ff6b35 60%, #f9b233 100%);
     background-size: 90px 90px, cover;
     color: white;
     text-align: center;
-    position: relative;
   }
-  .hero-eyebrow {
+  .hero .calling {
     display: inline-block;
-    padding: 6px 18px;
-    background: rgba(255,255,255,0.20);
-    border: 1px solid rgba(255,255,255,0.45);
+    padding: 6px 20px;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.5);
     border-radius: 100px;
     font-size: 16px;
-    letter-spacing: 4px;
-    font-weight: 600;
+    letter-spacing: 5px;
+    font-weight: 700;
     text-transform: uppercase;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .hero h1 {
-    font-size: 86px;
+    font-size: 78px;
     font-weight: 900;
     letter-spacing: -1.5px;
     line-height: 0.95;
-    text-shadow: 0 4px 16px rgba(0,0,0,0.32);
-    margin-bottom: 8px;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.35);
   }
   .hero h1 .accent {
     display: block;
-    color: #fff;
-    font-size: 70px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    margin-top: 6px;
-  }
-  .hero h1 .stars { color: #ffd166; font-size: 36px; vertical-align: middle; margin: 0 14px; }
-  .hero .subtitle {
-    margin-top: 18px;
-    font-size: 22px;
-    color: var(--cream);
-    text-shadow: 0 2px 6px rgba(0,0,0,0.25);
-    line-height: 1.4;
-    max-width: 720px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .hero .gta-line {
-    margin-top: 18px;
-    font-size: 17px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-weight: 600;
-    opacity: 0.92;
-  }
-
-  /* ===== Bottom torana of hero — connects to body ===== */
-  .torana-bottom {
-    height: 18px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='18' viewBox='0 0 32 18'%3E%3Cpath d='M0 0 L16 18 L32 0 Z' fill='%23d4a437'/%3E%3Ccircle cx='16' cy='15' r='1.8' fill='%23fff8ec'/%3E%3C/svg%3E");
-    background-size: 32px 18px;
-    background-repeat: repeat-x;
-  }
-
-  /* ===== Body sections ===== */
-  .body {
-    padding: 36px 56px 36px;
-  }
-
-  .section-title {
-    text-align: center;
-    font-size: 34px;
+    font-size: 60px;
     font-weight: 800;
-    color: var(--fest-red);
-    margin-bottom: 20px;
+    color: #ffd166;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 .star { color: #ffd166; font-size: 44px; vertical-align: middle; margin: 0 12px; }
+  .hero .name {
+    margin-top: 16px;
+    background: white;
+    color: var(--r);
+    display: inline-block;
+    padding: 12px 32px;
+    border-radius: 100px;
+    font-size: 26px;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    letter-spacing: 0.3px;
+  }
+  .hero .when {
+    margin-top: 14px;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .hero .when strong { color: #ffd166; }
+
+  /* ===== PHOTO COLLAGE ===== */
+  /* Each tile uses a fallback chain: real image (if user adds it) → emoji + colored gradient */
+  .collage {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1.1fr;
+    grid-template-rows: 240px 200px;
+    gap: 8px;
+    padding: 8px;
+    background: var(--r-dark);
+  }
+  .tile {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    box-shadow: inset 0 -60px 80px -30px rgba(0,0,0,0.55);
+  }
+  .tile .emoji {
+    font-size: 110px;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+  }
+  .tile .label {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  /* Each tile has a fallback gradient + tries to load a real image */
+  .tile.dance   { background-image: url('flyer-img/dance.jpg'),   linear-gradient(135deg, #b53075, #c1272d); }
+  .tile.food    { background-image: url('flyer-img/food.jpg'),    linear-gradient(135deg, #ff6b35, #f9b233); }
+  .tile.crowd   { background-image: url('flyer-img/crowd.jpg'),   linear-gradient(135deg, #185fa5, #b53075); }
+  .tile.music   { background-image: url('flyer-img/music.jpg'),   linear-gradient(135deg, #c1272d, #ff6b35); }
+  .tile.shopping{ background-image: url('flyer-img/shopping.jpg'),linear-gradient(135deg, #d4a437, #198754); }
+  .tile.family  { background-image: url('flyer-img/family.jpg'),  linear-gradient(135deg, #f9b233, #c1272d); }
+  /* Span certain tiles to make a magazine-style collage */
+  .tile.dance   { grid-row: 1 / 3; }
+  .tile.crowd   { grid-row: 1 / 3; }
+
+  /* ===== Body — Volunteer opportunities + Why Join ===== */
+  .body {
+    padding: 28px 44px 24px;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--r);
+    text-align: center;
+    margin-bottom: 14px;
     letter-spacing: -0.3px;
   }
   .section-title .ornament {
     display: inline-block;
     width: 50px;
     height: 2px;
-    background: var(--fest-gold);
+    background: var(--g);
     vertical-align: middle;
     margin: 0 12px;
   }
 
-  /* Date / venue tile */
-  .event-tile {
-    background: white;
-    border: 2px solid var(--fest-gold);
-    border-radius: 18px;
-    padding: 20px 28px;
+  .roles-grid {
     display: grid;
-    grid-template-columns: 1fr 1px 1fr;
-    gap: 24px;
-    align-items: center;
-    margin-bottom: 28px;
-    box-shadow: 0 8px 24px rgba(193,39,45,0.08);
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
   }
-  .event-tile .label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-warm);
-    font-weight: 700;
+  .role-card {
+    background: white;
+    border: 2px solid var(--g);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(193,39,45,0.08);
   }
-  .event-tile .value {
-    font-size: 22px;
+  .role-card .icon {
+    font-size: 36px;
+    margin-bottom: 4px;
+  }
+  .role-card .role-name {
+    font-size: 14px;
     font-weight: 800;
-    color: var(--fest-red);
-    line-height: 1.25;
-    margin-top: 4px;
-  }
-  .event-tile .divider {
-    height: 60px;
-    background: linear-gradient(to bottom, transparent, var(--fest-gold), transparent);
+    color: var(--r-dark);
+    line-height: 1.2;
   }
 
-  /* Why volunteer — 4-card grid */
-  .why-grid {
+  /* Why Join */
+  .why-strip {
+    background: linear-gradient(135deg, var(--cream), var(--ivory));
+    border: 2px dashed var(--g);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+  }
+  .why-strip h3 {
+    text-align: center;
+    color: var(--r);
+    font-size: 22px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+  }
+  .why-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 32px;
+    gap: 10px 24px;
+    list-style: none;
   }
-  .why-card {
-    background: white;
-    border-left: 5px solid var(--fest-saffron);
-    border-radius: 12px;
-    padding: 18px 20px;
-    box-shadow: 0 6px 18px rgba(193,39,45,0.06);
+  .why-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
   }
-  .why-card.gold   { border-left-color: var(--fest-gold); }
-  .why-card.green  { border-left-color: var(--fest-green); }
-  .why-card.magenta { border-left-color: var(--fest-magenta); }
-  .why-card .icon {
-    width: 48px; height: 48px;
+  .why-list li .check {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
     border-radius: 50%;
-    background: var(--cream);
+    background: var(--g);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
-    margin-bottom: 10px;
-  }
-  .why-card h3 {
-    font-size: 19px;
-    font-weight: 800;
-    color: var(--fest-red-dark);
-    margin-bottom: 6px;
-  }
-  .why-card p {
-    font-size: 15px;
-    color: #5a3215;
-    line-height: 1.5;
+    font-weight: 900;
+    font-size: 14px;
   }
 
-  /* Roles strip */
-  .roles {
-    background: linear-gradient(135deg, #fff8ec, #fdf6e3);
-    border: 1px dashed var(--fest-gold);
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin-bottom: 28px;
-  }
-  .roles .roles-title {
-    text-align: center;
-    font-size: 18px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    font-weight: 700;
-    color: var(--text-warm);
-    margin-bottom: 14px;
-  }
-  .roles ul {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px 10px;
-  }
-  .roles li {
-    background: white;
-    border: 1px solid var(--fest-gold);
-    border-radius: 100px;
-    padding: 8px 16px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--fest-red-dark);
-  }
-  .roles li .dot { color: var(--fest-saffron); margin-right: 4px; }
-
-  /* CTA panel — QR + URL */
+  /* CTA — QR + URL */
   .cta {
-    background: linear-gradient(135deg, var(--fest-red), var(--fest-magenta));
-    border-radius: 18px;
-    padding: 32px 28px;
+    background: linear-gradient(135deg, var(--r), var(--p));
+    border-radius: 16px;
+    padding: 24px;
     color: white;
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 32px;
+    gap: 20px;
     align-items: center;
     box-shadow: 0 12px 32px rgba(193,39,45,0.30);
+    margin-bottom: 18px;
   }
   .cta-text h2 {
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 8px;
+    font-size: 26px;
+    font-weight: 900;
     line-height: 1.15;
+    margin-bottom: 6px;
   }
   .cta-text p {
-    font-size: 17px;
+    font-size: 15px;
     line-height: 1.5;
     opacity: 0.95;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
   .cta-url {
     display: inline-block;
     background: white;
-    color: var(--fest-red);
-    padding: 8px 18px;
+    color: var(--r);
+    padding: 7px 16px;
     border-radius: 100px;
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 800;
+    font-size: 13px;
     word-break: break-all;
-    max-width: 100%;
   }
   .cta-qr {
     background: white;
@@ -290,50 +298,55 @@
   }
   .cta-qr #qr-img canvas, .cta-qr #qr-img img { display: block; }
   .cta-qr .scan-hint {
-    margin-top: 10px;
-    color: var(--fest-red);
-    font-size: 12px;
-    font-weight: 700;
+    margin-top: 8px;
+    color: var(--r);
+    font-size: 11px;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
 
-  /* Audience pills */
-  .audience {
-    text-align: center;
-    margin-top: 26px;
-    margin-bottom: 8px;
-  }
-  .audience .pill {
-    display: inline-block;
-    margin: 4px;
-    padding: 8px 18px;
-    background: var(--cream);
-    border: 1px solid var(--fest-gold);
-    border-radius: 100px;
-    font-weight: 700;
-    color: var(--text-warm);
-    font-size: 14px;
-  }
-  .audience .pill .star { color: var(--fest-saffron); margin-right: 4px; }
-
   /* Footer */
   .foot {
-    background: var(--fest-red-dark);
+    background: var(--r-dark);
     color: white;
-    padding: 18px 40px;
+    padding: 16px 40px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
   }
-  .foot strong { color: var(--fest-marigold); }
+  .foot strong { color: var(--m); }
   .foot .stars-line {
     color: #ffd166;
     letter-spacing: 6px;
-    margin-bottom: 6px;
-    font-size: 12px;
+    margin-bottom: 4px;
+    font-size: 11px;
   }
 
-  /* ===== Print: optimized for Letter / A4 ===== */
+  /* Side ornament — like the Summer Mela's right-edge sidebar */
+  .side-strip {
+    background: white;
+    padding: 12px 24px;
+    text-align: center;
+    border-top: 2px solid var(--g);
+    border-bottom: 2px solid var(--g);
+  }
+  .side-strip .pills {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  .side-strip .pill {
+    background: var(--cream);
+    color: var(--r-dark);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid var(--g);
+  }
+
+  /* Print styles */
   @media print {
     @page { margin: 0; size: auto; }
     body { background: white; padding: 0; }
@@ -341,7 +354,7 @@
     .controls { display: none !important; }
   }
 
-  /* ===== Helpful controls (not part of the flyer image) ===== */
+  /* Controls panel (not part of flyer) */
   .controls {
     position: fixed;
     top: 16px;
@@ -352,9 +365,9 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
     font-size: 13px;
     z-index: 100;
-    max-width: 260px;
+    max-width: 280px;
   }
-  .controls h4 { color: var(--fest-red); margin-bottom: 6px; font-size: 14px; }
+  .controls h4 { color: var(--r); margin-bottom: 6px; font-size: 14px; }
   .controls input {
     width: 100%;
     padding: 6px 8px;
@@ -367,32 +380,37 @@
     width: 100%;
     padding: 8px;
     margin-top: 6px;
-    background: var(--fest-red);
+    background: var(--r);
     color: white;
     border: none;
     border-radius: 6px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
   }
-  .controls button:hover { background: var(--fest-red-dark); }
-  .controls .small { font-size: 11px; color: #666; line-height: 1.4; margin-top: 6px; }
+  .controls button:hover { background: var(--r-dark); }
+  .controls .small { font-size: 11px; color: #666; line-height: 1.4; margin-top: 8px; }
 
-  /* Responsive — fits on phones for preview */
+  /* Mobile preview */
   @media (max-width: 1100px) {
-    .hero h1 { font-size: 64px; }
-    .hero h1 .accent { font-size: 50px; }
+    .hero h1 { font-size: 56px; }
+    .hero h1 .accent { font-size: 44px; }
+    .collage { grid-template-rows: 180px 160px; }
+    .tile .emoji { font-size: 70px; }
   }
   @media (max-width: 720px) {
-    .hero { padding: 28px 24px 24px; }
-    .hero h1 { font-size: 44px; }
-    .hero h1 .accent { font-size: 32px; }
-    .hero .subtitle { font-size: 16px; }
-    .body { padding: 24px 20px; }
-    .why-grid { grid-template-columns: 1fr; }
-    .event-tile { grid-template-columns: 1fr; gap: 12px; }
-    .event-tile .divider { display: none; }
+    .hero { padding: 22px 18px 18px; }
+    .hero h1 { font-size: 38px; }
+    .hero h1 .accent { font-size: 28px; }
+    .hero .name { font-size: 18px; padding: 8px 18px; }
+    .hero .when { font-size: 16px; }
+    .body { padding: 20px 16px; }
+    .collage { grid-template-columns: 1fr 1fr; grid-template-rows: 140px 140px 140px; gap: 6px; }
+    .tile .emoji { font-size: 56px; }
+    .tile.dance, .tile.crowd { grid-row: auto; }
+    .roles-grid { grid-template-columns: 1fr 1fr; }
+    .why-list { grid-template-columns: 1fr; }
     .cta { grid-template-columns: 1fr; text-align: center; }
-    .section-title { font-size: 24px; }
+    .section-title { font-size: 22px; }
   }
 </style>
 </head>
@@ -404,93 +422,115 @@
   <input type="url" id="urlInput" placeholder="https://gtafest.github.io/...">
   <button onclick="updateQR()">Update QR</button>
   <button onclick="window.print()">Print / Save as PDF</button>
-  <p class="small">To export as image for social media: scroll to the flyer, take a screenshot, or use your browser's "Save as PDF" then convert. Best dimensions: 1080×1350 (Instagram portrait).</p>
+  <p class="small">For social media: full-page screenshot or print to PDF then export. Sized for Instagram portrait.</p>
+  <p class="small"><strong>To add real photos:</strong> create a folder named <code>flyer-img</code> next to this file and drop in JPGs named <code>dance.jpg</code>, <code>food.jpg</code>, <code>crowd.jpg</code>, <code>music.jpg</code>, <code>shopping.jpg</code>, <code>family.jpg</code>. They'll auto-replace the emoji tiles.</p>
 </div>
 
 <div class="flyer" id="flyer">
 
   <!-- Top torana -->
-  <div class="torana-top"></div>
+  <div class="torana"></div>
 
-  <!-- Hero -->
+  <!-- Official GTA Atlanta banner image -->
+  <img src="gta-banner.png" alt="Global Telangana Association — Atlanta" class="banner-img" />
+
+  <!-- Headline strip below the banner -->
   <header class="hero">
-    <div class="hero-eyebrow">✦ Calling all youth &amp; adults ✦</div>
+    <div class="calling">★ Calling all volunteers ★</div>
     <h1>
-      Volunteer<br>
-      <span class="stars">✦</span>
-      <span class="accent">With Us</span>
-      <span class="stars">✦</span>
+      JOIN OUR
+      <span class="accent">VOLUNTEER TEAM!</span>
     </h1>
-    <p class="subtitle">Be part of <strong>Atlanta's biggest celebration of Telangana culture</strong>. Make memories. Make community-service hours. Make new friends.</p>
-    <div class="gta-line">Global Telangana Association · GTA International Fest</div>
+    <div class="when">📅 <strong>Saturday, June 6, 2026</strong> · 11 AM – 8 PM EST · Atlanta, GA</div>
   </header>
 
-  <!-- Connecting torana -->
-  <div class="torana-bottom"></div>
+  <!-- PHOTO COLLAGE -->
+  <div class="collage">
+    <div class="tile dance">
+      <div class="emoji">💃🕺</div>
+      <div class="label">Cultural Dance</div>
+    </div>
+    <div class="tile food">
+      <div class="emoji">🥘</div>
+      <div class="label">Food Stalls</div>
+    </div>
+    <div class="tile crowd">
+      <div class="emoji">🎉</div>
+      <div class="label">Festival Crowd</div>
+    </div>
+    <div class="tile music">
+      <div class="emoji">🎶</div>
+      <div class="label">Live Music</div>
+    </div>
+    <div class="tile shopping">
+      <div class="emoji">🛍️</div>
+      <div class="label">Vendor Bazaar</div>
+    </div>
+    <div class="tile family">
+      <div class="emoji">👨‍👩‍👧‍👦</div>
+      <div class="label">Family Fun</div>
+    </div>
+  </div>
+
+  <!-- Side strip — audience pills -->
+  <div class="side-strip">
+    <div class="pills">
+      <span class="pill">★ Middle School</span>
+      <span class="pill">★ High School</span>
+      <span class="pill">★ College Students</span>
+      <span class="pill">★ Adult Volunteers</span>
+    </div>
+  </div>
 
   <div class="body">
 
-    <!-- Event tile -->
-    <div class="event-tile">
-      <div>
-        <div class="label">📅 Event Date</div>
-        <div class="value">Saturday<br>June 6, 2026</div>
-      </div>
-      <div class="divider"></div>
-      <div>
-        <div class="label">⏰ Volunteer Hours</div>
-        <div class="value">11 AM – 8 PM<br><span style="font-size:14px; color:var(--text-warm); font-weight:600;">EST · outdoor venue</span></div>
-      </div>
-    </div>
-
-    <!-- Why volunteer -->
-    <h2 class="section-title"><span class="ornament"></span>Why Join Us<span class="ornament"></span></h2>
-    <div class="why-grid">
-
-      <div class="why-card">
-        <div class="icon">🎓</div>
-        <h3>Earn Service Hours</h3>
-        <p>Officially verified community-service certificate to use for school credit and college applications.</p>
-      </div>
-
-      <div class="why-card gold">
-        <div class="icon">🤝</div>
-        <h3>Build Friendships</h3>
-        <p>Meet other volunteers, build leadership skills, and become part of a vibrant Telugu community.</p>
-      </div>
-
-      <div class="why-card green">
-        <div class="icon">🎊</div>
-        <h3>Celebrate Culture</h3>
-        <p>Help showcase Telangana's music, dance, food, and traditions to the wider Atlanta community.</p>
-      </div>
-
-      <div class="why-card magenta">
-        <div class="icon">🪔</div>
-        <h3>Give Back</h3>
-        <p>Contribute to a vibrant cultural event that brings families together and inspires the next generation.</p>
-      </div>
-
-    </div>
-
     <!-- Volunteer roles -->
-    <div class="roles">
-      <div class="roles-title">Roles you can pick from</div>
-      <ul>
-        <li><span class="dot">✦</span>Registration desk</li>
-        <li><span class="dot">✦</span>Cultural program help</li>
-        <li><span class="dot">✦</span>Food service</li>
-        <li><span class="dot">✦</span>Stage crew</li>
-        <li><span class="dot">✦</span>Parking</li>
-        <li><span class="dot">✦</span>And more!</li>
+    <h2 class="section-title"><span class="ornament"></span>Volunteer Roles<span class="ornament"></span></h2>
+    <div class="roles-grid">
+      <div class="role-card">
+        <div class="icon">📝</div>
+        <div class="role-name">Registration Desk</div>
+      </div>
+      <div class="role-card">
+        <div class="icon">🎭</div>
+        <div class="role-name">Cultural Program Help</div>
+      </div>
+      <div class="role-card">
+        <div class="icon">🍽️</div>
+        <div class="role-name">Food Service</div>
+      </div>
+      <div class="role-card">
+        <div class="icon">🎬</div>
+        <div class="role-name">Stage Crew</div>
+      </div>
+      <div class="role-card">
+        <div class="icon">🚗</div>
+        <div class="role-name">Parking</div>
+      </div>
+      <div class="role-card">
+        <div class="icon">📸</div>
+        <div class="role-name">Photo / Video</div>
+      </div>
+    </div>
+
+    <!-- Why Join? -->
+    <div class="why-strip">
+      <h3>★ Why Volunteer? ★</h3>
+      <ul class="why-list">
+        <li><span class="check">✓</span><span><strong>Earn community-service hours</strong> — verified certificate for school credit &amp; college apps</span></li>
+        <li><span class="check">✓</span><span><strong>Free meal &amp; refreshments</strong> during your shift</span></li>
+        <li><span class="check">✓</span><span><strong>Build leadership skills</strong> &amp; meet community leaders</span></li>
+        <li><span class="check">✓</span><span><strong>Make new friends</strong> from across Atlanta &amp; beyond</span></li>
+        <li><span class="check">✓</span><span><strong>Be part of</strong> Telangana's biggest cultural celebration in GA</span></li>
+        <li><span class="check">✓</span><span><strong>Volunteer T-shirt</strong> &amp; certificate of appreciation</span></li>
       </ul>
     </div>
 
-    <!-- Call to action: QR + URL -->
+    <!-- CTA — QR + URL -->
     <div class="cta">
       <div class="cta-text">
-        <h2>Ready to volunteer?</h2>
-        <p>Register in under 2 minutes. Parental consent required for minors. School credit certificate provided.</p>
+        <h2>Sign up in 2 minutes!</h2>
+        <p>Parental consent required for minors. School credit certificate provided after the event.</p>
         <div class="cta-url" id="urlDisplay">https://gtafest.github.io/gta-volunteer-fest/</div>
       </div>
       <div class="cta-qr">
@@ -498,31 +538,21 @@
         <div class="scan-hint">📱 Scan to register</div>
       </div>
     </div>
-
-    <!-- Audience -->
-    <div class="audience">
-      <div class="pill"><span class="star">★</span>Middle School</div>
-      <div class="pill"><span class="star">★</span>High School</div>
-      <div class="pill"><span class="star">★</span>College Students</div>
-      <div class="pill"><span class="star">★</span>Adult Volunteers</div>
-    </div>
   </div>
 
   <!-- Footer -->
   <footer class="foot">
     <div class="stars-line">✦ ✦ ✦ ✦ ✦</div>
-    Questions? Contact <strong>GTA Volunteer Coordinator</strong> ·
-    Follow <strong>@gtaatlanta</strong> on social media ·
-    <strong>www.gtaatlanta.org</strong>
+    <strong>Global Telangana Association</strong> · Atlanta, GA<br>
+    Questions? Contact GTA Volunteer Coordinator · Follow <strong>@gtaatlanta</strong> · <strong>www.gtaatlanta.org</strong>
   </footer>
 
   <!-- Bottom torana -->
-  <div class="torana-top" style="transform: rotate(180deg);"></div>
+  <div class="torana" style="transform: rotate(180deg);"></div>
 
 </div>
 
 <script>
-  // Default URL — can be overridden in the controls input
   const DEFAULT_URL = 'https://gtafest.github.io/gta-volunteer-fest/';
 
   function updateQR() {
@@ -532,15 +562,14 @@
     container.innerHTML = '';
     new QRCode(container, {
       text: url,
-      width: 180,
-      height: 180,
+      width: 170,
+      height: 170,
       colorDark: '#c1272d',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
   }
 
-  // Initial render
   window.addEventListener('load', () => {
     document.getElementById('urlInput').value = DEFAULT_URL;
     updateQR();
