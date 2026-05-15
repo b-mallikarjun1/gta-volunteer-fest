@@ -115,55 +115,27 @@
   }
   .hero .when strong { color: #ffd166; }
 
-  /* ===== PHOTO COLLAGE ===== */
-  /* Each tile uses a fallback chain: real image (if user adds it) → emoji + colored gradient */
-  .collage {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr 1.1fr;
-    grid-template-rows: 240px 200px;
-    gap: 8px;
-    padding: 8px;
+  /* ===== HERO PHOTO — single large image showing the festival in action ===== */
+  .hero-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
     background: var(--r-dark);
+    border-top: 4px solid var(--g);
+    border-bottom: 4px solid var(--g);
   }
-  .tile {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .hero-photo-caption {
+    background: var(--r-dark);
     color: white;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    box-shadow: inset 0 -60px 80px -30px rgba(0,0,0,0.55);
-  }
-  .tile .emoji {
-    font-size: 110px;
-    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
-  }
-  .tile .label {
-    position: absolute;
-    bottom: 12px;
-    left: 0;
-    right: 0;
     text-align: center;
+    padding: 10px 24px;
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-transform: uppercase;
+    font-weight: 700;
   }
-  /* Each tile has a fallback gradient + tries to load a real image */
-  .tile.dance   { background-image: url('flyer-img/dance.jpg'),   linear-gradient(135deg, #b53075, #c1272d); }
-  .tile.food    { background-image: url('flyer-img/food.jpg'),    linear-gradient(135deg, #ff6b35, #f9b233); }
-  .tile.crowd   { background-image: url('flyer-img/crowd.jpg'),   linear-gradient(135deg, #185fa5, #b53075); }
-  .tile.music   { background-image: url('flyer-img/music.jpg'),   linear-gradient(135deg, #c1272d, #ff6b35); }
-  .tile.shopping{ background-image: url('flyer-img/shopping.jpg'),linear-gradient(135deg, #d4a437, #198754); }
-  .tile.family  { background-image: url('flyer-img/family.jpg'),  linear-gradient(135deg, #f9b233, #c1272d); }
-  /* Span certain tiles to make a magazine-style collage */
-  .tile.dance   { grid-row: 1 / 3; }
-  .tile.crowd   { grid-row: 1 / 3; }
+  .hero-photo-caption .star { color: var(--m); margin: 0 10px; }
 
   /* ===== Body — Volunteer opportunities + Why Join ===== */
   .body {
@@ -423,7 +395,7 @@
   <button onclick="updateQR()">Update QR</button>
   <button onclick="window.print()">Print / Save as PDF</button>
   <p class="small">For social media: full-page screenshot or print to PDF then export. Sized for Instagram portrait.</p>
-  <p class="small"><strong>To add real photos:</strong> create a folder named <code>flyer-img</code> next to this file and drop in JPGs named <code>dance.jpg</code>, <code>food.jpg</code>, <code>crowd.jpg</code>, <code>music.jpg</code>, <code>shopping.jpg</code>, <code>family.jpg</code>. They'll auto-replace the emoji tiles.</p>
+  <p class="small"><strong>Required image:</strong> save the festival scene image as <code>fest-scene.jpg</code> in the same folder as this file. The official GTA banner should be saved as <code>gta-banner.png</code>.</p>
 </div>
 
 <div class="flyer" id="flyer">
@@ -444,32 +416,10 @@
     <div class="when">📅 <strong>Saturday, June 6, 2026</strong> · 11 AM – 8 PM EST · Atlanta, GA</div>
   </header>
 
-  <!-- PHOTO COLLAGE -->
-  <div class="collage">
-    <div class="tile dance">
-      <div class="emoji">💃🕺</div>
-      <div class="label">Cultural Dance</div>
-    </div>
-    <div class="tile food">
-      <div class="emoji">🥘</div>
-      <div class="label">Food Stalls</div>
-    </div>
-    <div class="tile crowd">
-      <div class="emoji">🎉</div>
-      <div class="label">Festival Crowd</div>
-    </div>
-    <div class="tile music">
-      <div class="emoji">🎶</div>
-      <div class="label">Live Music</div>
-    </div>
-    <div class="tile shopping">
-      <div class="emoji">🛍️</div>
-      <div class="label">Vendor Bazaar</div>
-    </div>
-    <div class="tile family">
-      <div class="emoji">👨‍👩‍👧‍👦</div>
-      <div class="label">Family Fun</div>
-    </div>
+  <!-- HERO PHOTO — the actual festival in action -->
+  <img src="fest-scene.jpg" alt="GTA International Fest — celebrating cultural diversity" class="hero-photo" />
+  <div class="hero-photo-caption">
+    <span class="star">★</span>Stage · Dance · Music · Kids Zone · Cultural Hub · Vendor Bazaar<span class="star">★</span>
   </div>
 
   <!-- Side strip — audience pills -->
