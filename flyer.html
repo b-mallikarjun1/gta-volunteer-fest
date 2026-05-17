@@ -7,61 +7,72 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --r: #c1272d;       /* festival red */
-    --r-dark: #7a0c16;
-    --s: #ff6b35;       /* saffron */
-    --m: #f9b233;       /* marigold */
-    --g: #d4a437;       /* gold */
-    --p: #b53075;       /* magenta */
-    --gr: #198754;      /* green */
-    --bl: #185fa5;      /* blue */
-    --cream: #fff8ec;
-    --ivory: #fdf6e3;
-    --ink: #4a1b0c;
+    --r: #c1272d; --r-dark: #7a0c16;
+    --s: #ff6b35; --m: #f9b233; --g: #d4a437;
+    --p: #b53075; --gr: #198754;
+    --cream: #fff8ec; --ivory: #fdf6e3; --ink: #4a1b0c;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: #2a0d04;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ink);
     -webkit-font-smoothing: antialiased;
     padding: 24px 8px;
   }
 
-  /* ===== Flyer canvas — 1080 x 1500 (Instagram portrait + room for collage) ===== */
   .flyer {
     width: 1080px;
     max-width: 100%;
     margin: 0 auto;
     background: var(--cream);
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='2' fill='%23d4a437' fill-opacity='0.20'/%3E%3Ccircle cx='30' cy='30' r='12' fill='none' stroke='%23d4a437' stroke-opacity='0.10' stroke-width='0.6'/%3E%3Ccircle cx='8' cy='8' r='1.4' fill='%23c1272d' fill-opacity='0.16'/%3E%3Ccircle cx='52' cy='52' r='1.4' fill='%23c1272d' fill-opacity='0.16'/%3E%3C/svg%3E");
     box-shadow: 0 30px 100px rgba(0,0,0,0.55);
-    position: relative;
     overflow: hidden;
   }
 
-  /* ===== Top torana (festive bunting) ===== */
   .torana {
-    height: 28px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28' viewBox='0 0 40 28'%3E%3Cpath d='M0 0 L20 28 L40 0 Z' fill='%23c1272d'/%3E%3Cpath d='M3 0 L20 24 L37 0 Z' fill='%23ff6b35'/%3E%3Ccircle cx='20' cy='25' r='2.4' fill='%23d4a437'/%3E%3C/svg%3E");
-    background-size: 40px 28px;
+    height: 22px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cpath d='M0 0 L20 22 L40 0 Z' fill='%23c1272d'/%3E%3Cpath d='M3 0 L20 19 L37 0 Z' fill='%23ff6b35'/%3E%3Ccircle cx='20' cy='19' r='1.8' fill='%23d4a437'/%3E%3C/svg%3E");
+    background-size: 40px 22px;
     background-repeat: repeat-x;
   }
 
-  /* ===== Banner image (the official GTA Atlanta banner) ===== */
+  /* Official GTA Atlanta banner */
   .banner-img {
     display: block;
     width: 100%;
     height: auto;
-    margin: 0;
     background: white;
   }
-  /* ===== Headline strip below the banner — call-to-action on red/saffron ===== */
+
+  /* Youth volunteer activities strip — sits between the GTA banner and the festival photo */
+  .youth-strip {
+    background: linear-gradient(135deg, var(--r), var(--s) 60%, var(--m));
+    color: white;
+    padding: 10px 18px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.45;
+    letter-spacing: 0.3px;
+    border-top: 2px solid var(--g);
+    border-bottom: 2px solid var(--g);
+  }
+  .youth-strip .lead {
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffd166;
+    font-size: 11px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .youth-strip .activities { font-weight: 700; }
+  .youth-strip .activities .sep { color: #ffd166; margin: 0 5px; opacity: 0.9; }
+
+  /* Compact headline strip */
   .hero {
-    padding: 22px 50px 22px;
+    padding: 14px 40px 14px;
     background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2.2' fill='%23ffffff' fill-opacity='0.30'/%3E%3Ccircle cx='45' cy='45' r='14' fill='none' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.7'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90' viewBox='0 0 90 90'%3E%3Ccircle cx='45' cy='45' r='2' fill='%23ffffff' fill-opacity='0.30'/%3E%3Ccircle cx='45' cy='45' r='12' fill='none' stroke='%23ffffff' stroke-opacity='0.18' stroke-width='0.6'/%3E%3C/svg%3E"),
       linear-gradient(135deg, #c1272d 0%, #e94e1b 30%, #ff6b35 60%, #f9b233 100%);
     background-size: 90px 90px, cover;
     color: white;
@@ -69,254 +80,238 @@
   }
   .hero .calling {
     display: inline-block;
-    padding: 6px 20px;
+    padding: 4px 14px;
     background: rgba(255,255,255,0.18);
     border: 1px solid rgba(255,255,255,0.5);
     border-radius: 100px;
-    font-size: 16px;
-    letter-spacing: 5px;
+    font-size: 12px;
+    letter-spacing: 3px;
     font-weight: 700;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
   }
   .hero h1 {
-    font-size: 78px;
+    font-size: 40px;
     font-weight: 900;
-    letter-spacing: -1.5px;
-    line-height: 0.95;
-    text-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.32);
   }
-  .hero h1 .accent {
-    display: block;
-    font-size: 60px;
-    font-weight: 800;
-    color: #ffd166;
-    letter-spacing: 0.5px;
-  }
-  .hero h1 .star { color: #ffd166; font-size: 44px; vertical-align: middle; margin: 0 12px; }
-  .hero .name {
-    margin-top: 16px;
-    background: white;
-    color: var(--r);
-    display: inline-block;
-    padding: 12px 32px;
-    border-radius: 100px;
-    font-size: 26px;
-    font-weight: 800;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    letter-spacing: 0.3px;
-  }
+  .hero h1 .accent { color: #ffd166; }
   .hero .when {
-    margin-top: 14px;
-    font-size: 22px;
+    margin-top: 6px;
+    font-size: 14px;
     font-weight: 700;
     color: white;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
   }
   .hero .when strong { color: #ffd166; }
 
-  /* ===== HERO PHOTO — single large image showing the festival in action ===== */
-  .hero-photo {
-    display: block;
+  /* ===== POSTER: full festival photo + minimal corner overlays ===== */
+  .poster {
+    position: relative;
     width: 100%;
-    height: auto;
-    margin: 0;
-    background: var(--r-dark);
+    background: var(--ivory);
     border-top: 4px solid var(--g);
     border-bottom: 4px solid var(--g);
   }
-  .hero-photo-caption {
-    background: var(--r-dark);
+  .poster-img {
+    display: block;
+    width: 100%;
+    height: auto;        /* preserve natural aspect — no cropping */
+    margin: 0;
+    background: var(--ivory);
+  }
+  /* Subtle vignette — darkens edges/corners so overlays sit on natural shadows */
+  .poster::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.30) 100%);
+    z-index: 1;
+  }
+  .poster > .ov,
+  .poster > .ov-headline,
+  .poster > .ov-qr {
+    z-index: 2;
+  }
+
+  /* Common overlay-card style: tinted dark glass with gold border */
+  .ov {
+    position: absolute;
+    background: rgba(0,0,0,0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border: 1px solid rgba(212,164,55,0.65);
+    border-radius: 8px;
+    padding: 8px 11px;
     color: white;
-    text-align: center;
-    padding: 10px 24px;
-    font-size: 14px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-  .hero-photo-caption .star { color: var(--m); margin: 0 10px; }
-
-  /* ===== Body — Volunteer opportunities + Why Join ===== */
-  .body {
-    padding: 28px 44px 24px;
-  }
-  .section-title {
-    font-size: 28px;
-    font-weight: 900;
-    color: var(--r);
-    text-align: center;
-    margin-bottom: 14px;
-    letter-spacing: -0.3px;
-  }
-  .section-title .ornament {
-    display: inline-block;
-    width: 50px;
-    height: 2px;
-    background: var(--g);
-    vertical-align: middle;
-    margin: 0 12px;
-  }
-
-  .roles-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .role-card {
-    background: white;
-    border: 2px solid var(--g);
-    border-radius: 14px;
-    padding: 14px 12px;
-    text-align: center;
-    box-shadow: 0 4px 14px rgba(193,39,45,0.08);
-  }
-  .role-card .icon {
-    font-size: 36px;
-    margin-bottom: 4px;
-  }
-  .role-card .role-name {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--r-dark);
-    line-height: 1.2;
-  }
-
-  /* Why Join */
-  .why-strip {
-    background: linear-gradient(135deg, var(--cream), var(--ivory));
-    border: 2px dashed var(--g);
-    border-radius: 16px;
-    padding: 18px 24px;
-    margin-bottom: 24px;
-  }
-  .why-strip h3 {
-    text-align: center;
-    color: var(--r);
-    font-size: 22px;
-    font-weight: 900;
-    margin-bottom: 12px;
-    letter-spacing: 0.3px;
-  }
-  .why-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 24px;
-    list-style: none;
-  }
-  .why-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    color: var(--ink);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
-  }
-  .why-list li .check {
-    flex-shrink: 0;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: var(--g);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 14px;
-  }
-
-  /* CTA — QR + URL */
-  .cta {
-    background: linear-gradient(135deg, var(--r), var(--p));
-    border-radius: 16px;
-    padding: 24px;
-    color: white;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 20px;
-    align-items: center;
-    box-shadow: 0 12px 32px rgba(193,39,45,0.30);
-    margin-bottom: 18px;
-  }
-  .cta-text h2 {
-    font-size: 26px;
-    font-weight: 900;
-    line-height: 1.15;
-    margin-bottom: 6px;
-  }
-  .cta-text p {
-    font-size: 15px;
-    line-height: 1.5;
-    opacity: 0.95;
-    margin-bottom: 10px;
-  }
-  .cta-url {
-    display: inline-block;
-    background: white;
-    color: var(--r);
-    padding: 7px 16px;
-    border-radius: 100px;
-    font-weight: 800;
-    font-size: 13px;
-    word-break: break-all;
-  }
-  .cta-qr {
-    background: white;
-    padding: 14px;
-    border-radius: 14px;
-    text-align: center;
-  }
-  .cta-qr #qr-img canvas, .cta-qr #qr-img img { display: block; }
-  .cta-qr .scan-hint {
-    margin-top: 8px;
-    color: var(--r);
     font-size: 11px;
+    line-height: 1.35;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  }
+  .ov-title {
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffd166;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+
+  /* Top-left: Volunteer Roles */
+  .ov-roles {
+    top: 16px; left: 16px;
+    max-width: 200px;
+  }
+  .ov-roles ul { list-style: none; }
+  .ov-roles li {
+    padding: 2px 0;
+    font-size: 11px;
+    color: white;
+  }
+  .ov-roles li::before {
+    content: '✦';
+    color: var(--m);
+    margin-right: 6px;
+  }
+
+  /* Top-LEFT corner: compact date badge — leaves the photo's stage banner fully visible */
+  .ov-headline {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: linear-gradient(135deg, rgba(193,39,45,0.88), rgba(255,107,53,0.88));
+    border: 1px solid rgba(255,209,102,0.7);
+    border-radius: 8px;
+    padding: 7px 12px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .ov-headline .title {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ffd166;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .ov-headline .date {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    line-height: 1.1;
+  }
+
+  /* Bottom-left: Why Volunteer — slimmer + more transparent */
+  .ov-why {
+    bottom: 14px; left: 14px;
+    max-width: 220px;
+    background: rgba(0,0,0,0.50);
+    padding: 7px 10px;
+  }
+  .ov-why .ov-title { font-size: 10px; margin-bottom: 4px; }
+  .ov-why li { font-size: 10px; line-height: 1.3; padding: 1px 0; }
+  .ov-why ul { list-style: none; }
+  .ov-why li {
+    padding: 2px 0;
+    font-size: 11px;
+    color: white;
+  }
+  .ov-why li::before {
+    content: '✓';
+    color: var(--m);
+    margin-right: 6px;
+    font-weight: 900;
+  }
+
+  /* Bottom-left: Audience pills (compact column) */
+  .ov-audience {
+    bottom: 16px; left: 16px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(212,164,55,0.6);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .ov-audience .pill {
+    display: block;
+    margin: 2px 0;
+    padding: 3px 9px;
+    background: rgba(255,248,236,0.96);
+    color: var(--r-dark);
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 10px;
+    text-align: center;
+  }
+  .ov-audience .pill .star { color: var(--s); margin-right: 2px; }
+
+  /* Bottom-right: QR code + URL only — slimmer */
+  .ov-qr {
+    position: absolute;
+    bottom: 14px; right: 14px;
+    background: rgba(255,255,255,0.97);
+    border: 2px solid var(--g);
+    border-radius: 10px;
+    padding: 7px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .ov-qr #qr-img canvas, .ov-qr #qr-img img { display: block; margin: 0 auto; }
+  .ov-qr .scan-hint {
+    margin-top: 6px;
+    color: var(--r);
+    font-size: 9px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
+  .ov-qr .url {
+    display: block;
+    margin-top: 4px;
+    font-size: 9px;
+    color: var(--ink);
+    font-weight: 600;
+    word-break: break-all;
+    max-width: 140px;
+  }
 
-  /* Footer */
-  .foot {
+  /* Optional bottom-center caption — tiny, centered */
+  .ov-caption {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    color: #ffd166;
+    padding: 3px 12px;
+    border-radius: 100px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Footer line */
+  .footline {
+    text-align: center;
     background: var(--r-dark);
     color: white;
-    padding: 16px 40px;
-    text-align: center;
-    font-size: 13px;
-  }
-  .foot strong { color: var(--m); }
-  .foot .stars-line {
-    color: #ffd166;
-    letter-spacing: 6px;
-    margin-bottom: 4px;
+    padding: 8px 12px;
     font-size: 11px;
+    letter-spacing: 1px;
   }
-
-  /* Side ornament — like the Summer Mela's right-edge sidebar */
-  .side-strip {
-    background: white;
-    padding: 12px 24px;
-    text-align: center;
-    border-top: 2px solid var(--g);
-    border-bottom: 2px solid var(--g);
-  }
-  .side-strip .pills {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-  }
-  .side-strip .pill {
-    background: var(--cream);
-    color: var(--r-dark);
-    padding: 6px 14px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 700;
-    border: 1px solid var(--g);
-  }
+  .footline strong { color: var(--m); }
 
   /* Print styles */
   @media print {
@@ -328,61 +323,35 @@
 
   /* Controls panel (not part of flyer) */
   .controls {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    background: white;
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    font-size: 13px;
-    z-index: 100;
-    max-width: 280px;
+    position: fixed; top: 16px; right: 16px;
+    background: white; border-radius: 12px;
+    padding: 14px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    font-size: 13px; z-index: 100; max-width: 280px;
   }
   .controls h4 { color: var(--r); margin-bottom: 6px; font-size: 14px; }
   .controls input {
-    width: 100%;
-    padding: 6px 8px;
-    margin: 6px 0;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 12px;
+    width: 100%; padding: 6px 8px; margin: 6px 0;
+    border: 1px solid #ddd; border-radius: 6px; font-size: 12px;
   }
   .controls button {
-    width: 100%;
-    padding: 8px;
-    margin-top: 6px;
-    background: var(--r);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: 700;
-    cursor: pointer;
+    width: 100%; padding: 8px; margin-top: 6px;
+    background: var(--r); color: white; border: none;
+    border-radius: 6px; font-weight: 700; cursor: pointer;
   }
   .controls button:hover { background: var(--r-dark); }
   .controls .small { font-size: 11px; color: #666; line-height: 1.4; margin-top: 8px; }
 
-  /* Mobile preview */
-  @media (max-width: 1100px) {
-    .hero h1 { font-size: 56px; }
-    .hero h1 .accent { font-size: 44px; }
-    .collage { grid-template-rows: 180px 160px; }
-    .tile .emoji { font-size: 70px; }
-  }
+  /* Mobile preview — overlays scale down */
   @media (max-width: 720px) {
-    .hero { padding: 22px 18px 18px; }
-    .hero h1 { font-size: 38px; }
-    .hero h1 .accent { font-size: 28px; }
-    .hero .name { font-size: 18px; padding: 8px 18px; }
-    .hero .when { font-size: 16px; }
-    .body { padding: 20px 16px; }
-    .collage { grid-template-columns: 1fr 1fr; grid-template-rows: 140px 140px 140px; gap: 6px; }
-    .tile .emoji { font-size: 56px; }
-    .tile.dance, .tile.crowd { grid-row: auto; }
-    .roles-grid { grid-template-columns: 1fr 1fr; }
-    .why-list { grid-template-columns: 1fr; }
-    .cta { grid-template-columns: 1fr; text-align: center; }
-    .section-title { font-size: 22px; }
+    .hero h1 { font-size: 26px; }
+    .hero .when { font-size: 12px; }
+    .ov { font-size: 9px; padding: 5px 7px; }
+    .ov-title { font-size: 9px; letter-spacing: 1.5px; }
+    .ov-roles, .ov-why { max-width: 130px; }
+    .ov-roles li, .ov-why li { font-size: 9px; }
+    .ov-audience .pill { font-size: 8px; padding: 2px 6px; }
+    .ov-qr { padding: 6px; }
+    .ov-caption { font-size: 7px; }
   }
 </style>
 </head>
@@ -394,132 +363,70 @@
   <input type="url" id="urlInput" placeholder="https://gtafest.github.io/...">
   <button onclick="updateQR()">Update QR</button>
   <button onclick="window.print()">Print / Save as PDF</button>
-  <p class="small">For social media: full-page screenshot or print to PDF then export. Sized for Instagram portrait.</p>
-  <p class="small"><strong>Required image:</strong> save the festival scene image as <code>fest-scene.jpg</code> in the same folder as this file. The official GTA banner should be saved as <code>gta-banner.png</code>.</p>
+  <p class="small">Save the festival photo as <code>fest-scene.jpg</code> in this folder. Banner is <code>gta-banner.png</code>.</p>
 </div>
 
-<div class="flyer" id="flyer">
+<div class="flyer">
 
-  <!-- Top torana -->
   <div class="torana"></div>
 
-  <!-- Official GTA Atlanta banner image -->
+  <!-- Official GTA Atlanta banner -->
   <img src="gta-banner.png" alt="Global Telangana Association — Atlanta" class="banner-img" />
 
-  <!-- Headline strip below the banner -->
-  <header class="hero">
-    <div class="calling">★ Calling all volunteers ★</div>
-    <h1>
-      JOIN OUR
-      <span class="accent">VOLUNTEER TEAM!</span>
-    </h1>
-    <div class="when">📅 <strong>Saturday, June 6, 2026</strong> · 11 AM – 8 PM EST · Atlanta, GA</div>
-  </header>
-
-  <!-- HERO PHOTO — the actual festival in action -->
-  <img src="fest-scene.jpg" alt="GTA International Fest — celebrating cultural diversity" class="hero-photo" />
-  <div class="hero-photo-caption">
-    <span class="star">★</span>Stage · Dance · Music · Kids Zone · Cultural Hub · Vendor Bazaar<span class="star">★</span>
+  <!-- Youth volunteer activities strip -->
+  <div class="youth-strip">
+    <span class="lead">★ Youth Volunteers Welcome ★</span>
+    <span class="activities">
+      Stage Crew<span class="sep">·</span>Kids Zone<span class="sep">·</span>Cultural Program<span class="sep">·</span>Photography &amp; Video<span class="sep">·</span>International Village Hosts<span class="sep">·</span>Music &amp; Dance Helpers<span class="sep">·</span>Food Service<span class="sep">·</span>Parking
+    </span>
   </div>
 
-  <!-- Side strip — audience pills -->
-  <div class="side-strip">
-    <div class="pills">
-      <span class="pill">★ Middle School</span>
-      <span class="pill">★ High School</span>
-      <span class="pill">★ College Students</span>
-      <span class="pill">★ Adult Volunteers</span>
-    </div>
-  </div>
+  <!-- ===== POSTER: full festival image with MINIMAL corner overlays ===== -->
+  <div class="poster">
+    <img src="fest-scene.jpg" onerror="this.src='fest-scene.png'; this.onerror=null;"
+         alt="GTA International Fest — celebrating cultural diversity" class="poster-img" />
 
-  <div class="body">
-
-    <!-- Volunteer roles -->
-    <h2 class="section-title"><span class="ornament"></span>Volunteer Roles<span class="ornament"></span></h2>
-    <div class="roles-grid">
-      <div class="role-card">
-        <div class="icon">📝</div>
-        <div class="role-name">Registration Desk</div>
-      </div>
-      <div class="role-card">
-        <div class="icon">🎭</div>
-        <div class="role-name">Cultural Program Help</div>
-      </div>
-      <div class="role-card">
-        <div class="icon">🍽️</div>
-        <div class="role-name">Food Service</div>
-      </div>
-      <div class="role-card">
-        <div class="icon">🎬</div>
-        <div class="role-name">Stage Crew</div>
-      </div>
-      <div class="role-card">
-        <div class="icon">🚗</div>
-        <div class="role-name">Parking</div>
-      </div>
-      <div class="role-card">
-        <div class="icon">📸</div>
-        <div class="role-name">Photo / Video</div>
-      </div>
+    <!-- Top-left: Compact date badge (photo's own banner identifies the event) -->
+    <div class="ov-headline">
+      <div class="title">Volunteer with us</div>
+      <div class="date">📅 June 6, 2026<br><span style="font-size: 10px; color: #ffd166;">11 AM – 8 PM EST</span></div>
     </div>
 
-    <!-- Why Join? -->
-    <div class="why-strip">
-      <h3>★ Why Volunteer? ★</h3>
-      <ul class="why-list">
-        <li><span class="check">✓</span><span><strong>Earn community-service hours</strong> — verified certificate for school credit &amp; college apps</span></li>
-        <li><span class="check">✓</span><span><strong>Free meal &amp; refreshments</strong> during your shift</span></li>
-        <li><span class="check">✓</span><span><strong>Build leadership skills</strong> &amp; meet community leaders</span></li>
-        <li><span class="check">✓</span><span><strong>Make new friends</strong> from across Atlanta &amp; beyond</span></li>
-        <li><span class="check">✓</span><span><strong>Be part of</strong> Telangana's biggest cultural celebration in GA</span></li>
-        <li><span class="check">✓</span><span><strong>Volunteer T-shirt</strong> &amp; certificate of appreciation</span></li>
+    <!-- Bottom-left: Why Volunteer (benefits to youth) -->
+    <div class="ov ov-why">
+      <div class="ov-title">Why Volunteer</div>
+      <ul>
+        <li>Earn community-service hours (verified)</li>
+        <li>Free meal &amp; volunteer T-shirt</li>
+        <li>Build leadership &amp; new friendships</li>
+        <li>Be part of Telangana's biggest GA event</li>
       </ul>
     </div>
 
-    <!-- CTA — QR + URL -->
-    <div class="cta">
-      <div class="cta-text">
-        <h2>Sign up in 2 minutes!</h2>
-        <p>Parental consent required for minors. School credit certificate provided after the event.</p>
-        <div class="cta-url" id="urlDisplay">https://gtafest.github.io/gta-volunteer-fest/</div>
-      </div>
-      <div class="cta-qr">
-        <div id="qr-img"></div>
-        <div class="scan-hint">📱 Scan to register</div>
-      </div>
+    <!-- Bottom-right: QR + scan label -->
+    <div class="ov-qr">
+      <div id="qr-img"></div>
+      <div class="scan-hint">📱 Scan to register</div>
+      <span class="url" id="urlDisplay">https://gtafest.github.io/gta-volunteer-fest/</span>
     </div>
   </div>
-
-  <!-- Footer -->
-  <footer class="foot">
-    <div class="stars-line">✦ ✦ ✦ ✦ ✦</div>
-    <strong>Global Telangana Association</strong> · Atlanta, GA<br>
-    Questions? Contact GTA Volunteer Coordinator · Follow <strong>@gtaatlanta</strong> · <strong>www.gtaatlanta.org</strong>
-  </footer>
-
-  <!-- Bottom torana -->
-  <div class="torana" style="transform: rotate(180deg);"></div>
 
 </div>
 
 <script>
   const DEFAULT_URL = 'https://gtafest.github.io/gta-volunteer-fest/';
-
   function updateQR() {
     const url = document.getElementById('urlInput').value.trim() || DEFAULT_URL;
     document.getElementById('urlDisplay').textContent = url;
-    const container = document.getElementById('qr-img');
-    container.innerHTML = '';
-    new QRCode(container, {
+    const c = document.getElementById('qr-img');
+    c.innerHTML = '';
+    new QRCode(c, {
       text: url,
-      width: 170,
-      height: 170,
-      colorDark: '#c1272d',
-      colorLight: '#ffffff',
+      width: 110, height: 110,
+      colorDark: '#c1272d', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
   }
-
   window.addEventListener('load', () => {
     document.getElementById('urlInput').value = DEFAULT_URL;
     updateQR();
