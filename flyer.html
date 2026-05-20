@@ -357,15 +357,6 @@
 </head>
 <body>
 
-<div class="controls">
-  <h4>Flyer Controls</h4>
-  <label style="font-size:11px;color:#666;">Registration URL (for QR):</label>
-  <input type="url" id="urlInput" placeholder="https://gtafest.github.io/...">
-  <button onclick="updateQR()">Update QR</button>
-  <button onclick="window.print()">Print / Save as PDF</button>
-  <p class="small">Save the festival photo as <code>fest-scene.jpg</code> in this folder. Banner is <code>gta-banner.png</code>.</p>
-</div>
-
 <div class="flyer">
 
   <div class="torana"></div>
@@ -397,7 +388,6 @@
       <div class="ov-title">Why Volunteer</div>
       <ul>
         <li>Earn community-service hours (verified)</li>
-        <li>Free meal &amp; volunteer T-shirt</li>
         <li>Build leadership &amp; new friendships</li>
         <li>Be part of Telangana's biggest GA event</li>
       </ul>
@@ -414,9 +404,10 @@
 </div>
 
 <script>
+  // To change the registration URL, edit DEFAULT_URL below and re-save the file.
   const DEFAULT_URL = 'https://gtafest.github.io/gta-volunteer-fest/';
   function updateQR() {
-    const url = document.getElementById('urlInput').value.trim() || DEFAULT_URL;
+    const url = DEFAULT_URL;
     document.getElementById('urlDisplay').textContent = url;
     const c = document.getElementById('qr-img');
     c.innerHTML = '';
@@ -427,10 +418,7 @@
       correctLevel: QRCode.CorrectLevel.H
     });
   }
-  window.addEventListener('load', () => {
-    document.getElementById('urlInput').value = DEFAULT_URL;
-    updateQR();
-  });
+  window.addEventListener('load', updateQR);
 </script>
 
 </body>

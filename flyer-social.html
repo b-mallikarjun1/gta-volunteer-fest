@@ -254,21 +254,6 @@
 </head>
 <body>
 
-<div class="controls">
-  <h3>📱 Social Media Flyer (1080×1350)</h3>
-  <p>Sized exactly for Instagram portrait / WhatsApp.</p>
-  <label>Registration URL (for QR):</label>
-  <input type="url" id="urlInput" placeholder="https://gtafest.github.io/...">
-  <button class="btn-update" onclick="updateQR()">↻ Update QR</button>
-  <button class="btn-download" onclick="downloadAsImage()">📥 Download as JPG</button>
-  <div class="status" id="status"></div>
-  <div class="help">
-    <strong>Need 2 images in this folder:</strong><br>
-    <code>gta-banner.png</code> and <code>fest-scene.jpg</code>.
-    If they're missing, you'll see placeholder gradients but the rest still renders.
-  </div>
-</div>
-
 <div class="flyer" id="flyer">
 
   <!-- (1) Torana -->
@@ -300,7 +285,6 @@
       <div class="ov-title">Why Volunteer</div>
       <ul>
         <li>Earn community-service hours (verified)</li>
-        <li>Free meal &amp; volunteer T-shirt</li>
         <li>Build leadership &amp; friendships</li>
         <li>Telangana's biggest GA event</li>
       </ul>
@@ -323,6 +307,18 @@
 
 </div>
 
+<!-- Single small Download button below the flyer (not a popup) -->
+<div style="text-align:center; margin: 20px auto 40px; max-width: 1080px;">
+  <button onclick="downloadAsImage()" id="dlBtn"
+          style="padding: 14px 32px; font-size: 15px; font-weight: 700;
+                 background: linear-gradient(135deg, #c1272d, #ff6b35);
+                 color: white; border: none; border-radius: 100px;
+                 cursor: pointer; box-shadow: 0 8px 20px rgba(193,39,45,0.4);">
+    📥 Download as JPG for Instagram / WhatsApp
+  </button>
+  <div id="dlStatus" style="margin-top: 10px; color: #ffd166; font-size: 12px; min-height: 16px;"></div>
+</div>
+
 <!-- ===== Scripts at end of body so they don't block rendering ===== -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
@@ -330,15 +326,16 @@
   const DEFAULT_URL = 'https://gtafest.github.io/gta-volunteer-fest/';
 
   function flash(msg, isErr) {
-    const s = document.getElementById('status');
+    const s = document.getElementById('dlStatus');
     if (!s) return;
     s.textContent = msg;
-    s.className = 'status' + (isErr ? ' err' : '');
+    s.style.color = isErr ? '#ff8888' : '#ffd166';
     setTimeout(function() { s.textContent = ''; }, 3500);
   }
 
+  // To change the registration URL, edit DEFAULT_URL above and re-save the file.
   function updateQR() {
-    const url = (document.getElementById('urlInput').value || '').trim() || DEFAULT_URL;
+    const url = DEFAULT_URL;
     document.getElementById('urlDisplay').textContent = url;
     const c = document.getElementById('qr-img');
     if (typeof QRCode === 'undefined') {
@@ -352,7 +349,6 @@
       colorDark: '#c1272d', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
-    flash('QR updated', false);
   }
 
   async function downloadAsImage() {
@@ -383,7 +379,6 @@
   }
 
   window.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('urlInput').value = DEFAULT_URL;
     // Try QR right away; if QRCode lib not loaded yet, retry once
     if (typeof QRCode !== 'undefined') updateQR();
     else setTimeout(function() { updateQR(); }, 800);
