@@ -77,11 +77,11 @@
   }
   .youth-strip .sep { color: #ffd166; margin: 0 4px; }
 
-  /* (4) POSTER — fixed 1072px, festival photo backdrop + overlays */
+  /* (4) POSTER — festival photo backdrop + overlays (height reduced to fit volunteer-strip) */
   .poster {
     position: relative;
     width: 100%;
-    height: 1072px;
+    height: 1000px;
     background-color: #fdf6e3;
     background-image:
       url('fest-scene.jpg'),
@@ -120,24 +120,37 @@
     text-align: center;
   }
 
-  /* date badge — TOP-CENTER (above the poster image, no overlap with Why Volunteer) */
-  .ov-headline {
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(193,39,45,0.92), rgba(255,107,53,0.92));
-    border: 1px solid rgba(255,209,102,0.7);
-    padding: 10px 20px;
+  /* (3b) Volunteer With Us — standalone strip below youth-strip, above festival photo */
+  .volunteer-strip {
+    height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #7a0c16 0%, #c1272d 45%, #e94e1b 100%);
+    border-top: 3px solid #d4a437;
+    border-bottom: 3px solid #d4a437;
+    color: #fff;
     text-align: center;
-    white-space: nowrap;
+    padding: 0 20px;
   }
-  .ov-headline .title {
-    font-size: 13px; font-weight: 900;
-    letter-spacing: 1.8px; text-transform: uppercase;
-    color: #ffd166; line-height: 1; margin-bottom: 4px;
+  .volunteer-strip .vol-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #ffd166;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    line-height: 1;
+    margin-bottom: 5px;
   }
-  .ov-headline .date { font-size: 17px; font-weight: 800; line-height: 1.1; }
-  .ov-headline .time { font-size: 11px; color: #ffd166; margin-top: 4px; }
+  .volunteer-strip .vol-date {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .volunteer-strip .vol-date strong { color: #ffd166; }
 
   /* why volunteer — bottom left */
   .ov-why {
@@ -233,15 +246,14 @@
     </span>
   </div>
 
+  <!-- (3b) Volunteer With Us strip — below GTA banner, above festival photo -->
+  <div class="volunteer-strip">
+    <div class="vol-title">&#127881; Volunteer With Us</div>
+    <div class="vol-date">&#128197; <strong>June 6, 2026</strong> &nbsp;&middot;&nbsp; 3 PM &ndash; 9 PM EST</div>
+  </div>
+
   <!-- (4) POSTER -->
   <div class="poster">
-
-    <!-- Date badge (top-left) -->
-    <div class="ov ov-headline">
-      <div class="title">Volunteer With Us</div>
-      <div class="date">&#128197; June 6, 2026</div>
-      <div class="time">3 PM &ndash; 9 PM EST</div>
-    </div>
 
     <!-- Why volunteer (bottom-left) -->
     <div class="ov ov-why">
