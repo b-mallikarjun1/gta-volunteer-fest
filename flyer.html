@@ -179,31 +179,39 @@
     margin-right: 6px;
   }
 
-  /* Volunteer With Us — standalone strip between banner and festival photo */
-  .volunteer-strip {
-    background: linear-gradient(135deg, #7a0c16 0%, #c1272d 45%, #e94e1b 100%);
-    border-top: 3px solid #d4a437;
-    border-bottom: 3px solid #d4a437;
-    padding: 16px 24px;
+  /* Volunteer With Us — small overlay box, top-center of poster near stage */
+  .ov-headline {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(122,12,22,0.92), rgba(193,39,45,0.92));
+    border: 1.5px solid rgba(212,164,55,0.85);
+    border-radius: 8px;
+    padding: 8px 18px;
     text-align: center;
     color: white;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    white-space: nowrap;
+    z-index: 2;
   }
-  .volunteer-strip .vol-title {
-    font-size: 26px;
+  .ov-headline .title {
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: #ffd166;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
-    margin-bottom: 5px;
+    line-height: 1;
+    margin-bottom: 4px;
   }
-  .volunteer-strip .vol-date {
-    font-size: 16px;
+  .ov-headline .date {
+    font-size: 13px;
     font-weight: 700;
-    color: #fff;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
   }
-  .volunteer-strip .vol-date strong { color: #ffd166; }
 
   /* Bottom-left: Why Volunteer — slimmer + more transparent */
   .ov-why {
@@ -367,16 +375,16 @@
     </span>
   </div>
 
-  <!-- Volunteer With Us — below the GTA banner, above the festival photo -->
-  <div class="volunteer-strip">
-    <div class="vol-title">🎉 Volunteer With Us</div>
-    <div class="vol-date">📅 <strong>June 6, 2026</strong> &nbsp;·&nbsp; 3 PM – 9 PM EST</div>
-  </div>
-
-  <!-- ===== POSTER: full festival image with MINIMAL corner overlays ===== -->
+  <!-- ===== POSTER: full festival image with overlays ===== -->
   <div class="poster">
     <img src="fest-scene.jpg" onerror="this.src='fest-scene.png'; this.onerror=null;"
          alt="GTA International Fest — celebrating cultural diversity" class="poster-img" />
+
+    <!-- Top-center: Volunteer With Us box — near stage, above dancers -->
+    <div class="ov-headline">
+      <div class="title">🎉 Volunteer With Us</div>
+      <div class="date">📅 June 6, 2026 &nbsp;·&nbsp; <span style="color:#ffd166;">3 PM – 9 PM EST</span></div>
+    </div>
 
     <!-- Bottom-left: Why Volunteer (benefits to youth) -->
     <div class="ov ov-why">
