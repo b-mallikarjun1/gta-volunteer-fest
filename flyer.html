@@ -179,54 +179,35 @@
     margin-right: 6px;
   }
 
-  /* Volunteer With Us — small overlay box, just below stage banner / lights */
-  .ov-headline {
+  /* ── Bottom flex row: Why Volunteer | Volunteer With Us | QR Code ── */
+  .poster-bottom {
     position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(122,12,22,0.92), rgba(193,39,45,0.92));
-    border: 1.5px solid rgba(212,164,55,0.85);
-    border-radius: 8px;
-    padding: 8px 20px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    white-space: nowrap;
+    bottom: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
     z-index: 2;
   }
-  .ov-headline .title {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #ffd166;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .ov-headline .date {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    line-height: 1.3;
-  }
+  /* All direct children become flex items — override .ov's absolute */
+  .poster-bottom > * { position: relative; flex-shrink: 1; min-width: 0; }
 
-  /* Bottom-left: Why Volunteer — slimmer + more transparent */
+  /* Why Volunteer */
   .ov-why {
-    bottom: 14px; left: 14px;
-    max-width: 220px;
-    background: rgba(0,0,0,0.50);
+    max-width: 200px;
+    background: rgba(0,0,0,0.55);
     padding: 7px 10px;
   }
   .ov-why .ov-title { font-size: 10px; margin-bottom: 4px; }
-  .ov-why li { font-size: 10px; line-height: 1.3; padding: 1px 0; }
   .ov-why ul { list-style: none; }
   .ov-why li {
     padding: 2px 0;
     font-size: 11px;
     color: white;
+    line-height: 1.3;
   }
   .ov-why li::before {
     content: '✓';
@@ -235,39 +216,44 @@
     font-weight: 900;
   }
 
-  /* Bottom-left: Audience pills (compact column) */
-  .ov-audience {
-    bottom: 16px; left: 16px;
-    background: rgba(0,0,0,0.55);
+  /* Volunteer With Us — center box */
+  .ov-headline {
+    background: linear-gradient(135deg, rgba(122,12,22,0.92), rgba(193,39,45,0.92));
+    border: 1.5px solid rgba(212,164,55,0.85);
     border-radius: 8px;
-    padding: 8px 10px;
-    border: 1px solid rgba(212,164,55,0.6);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-  }
-  .ov-audience .pill {
-    display: block;
-    margin: 2px 0;
-    padding: 3px 9px;
-    background: rgba(255,248,236,0.96);
-    color: var(--r-dark);
-    border-radius: 100px;
-    font-weight: 700;
-    font-size: 10px;
+    padding: 8px 14px;
     text-align: center;
+    color: white;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
-  .ov-audience .pill .star { color: var(--s); margin-right: 2px; }
+  .ov-headline .title {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ffd166;
+    line-height: 1;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  .ov-headline .date {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
 
-  /* Bottom-right: QR code + URL only — slimmer */
+  /* QR Code */
   .ov-qr {
-    position: absolute;
-    bottom: 14px; right: 14px;
     background: rgba(255,255,255,0.97);
     border: 2px solid var(--g);
     border-radius: 10px;
     padding: 7px;
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    flex-shrink: 0;
   }
   .ov-qr #qr-img canvas, .ov-qr #qr-img img { display: block; margin: 0 auto; }
   .ov-qr .scan-hint {
@@ -285,7 +271,7 @@
     color: var(--ink);
     font-weight: 600;
     word-break: break-all;
-    max-width: 140px;
+    max-width: 120px;
   }
 
   /* Optional bottom-center caption — tiny, centered */
@@ -344,17 +330,22 @@
   .controls button:hover { background: var(--r-dark); }
   .controls .small { font-size: 11px; color: #666; line-height: 1.4; margin-top: 8px; }
 
-  /* Mobile preview — overlays scale down */
-  @media (max-width: 720px) {
-    .hero h1 { font-size: 26px; }
-    .hero .when { font-size: 12px; }
-    .ov { font-size: 9px; padding: 5px 7px; }
-    .ov-title { font-size: 9px; letter-spacing: 1.5px; }
-    .ov-roles, .ov-why { max-width: 130px; }
-    .ov-roles li, .ov-why li { font-size: 9px; }
-    .ov-audience .pill { font-size: 8px; padding: 2px 6px; }
-    .ov-qr { padding: 6px; }
-    .ov-caption { font-size: 7px; }
+  /* Mobile — stack bottom boxes vertically so they never overlap */
+  @media (max-width: 600px) {
+    .poster-bottom {
+      flex-direction: column;
+      align-items: center;
+      bottom: 10px;
+      left: 8px;
+      right: 8px;
+      gap: 6px;
+    }
+    .poster-bottom > * { width: 100%; max-width: 100%; flex-shrink: 1; }
+    .ov-why { max-width: 100%; }
+    .ov-why li, .ov-why .ov-title { font-size: 9px; }
+    .ov-headline .title { font-size: 10px; }
+    .ov-headline .date { font-size: 10px; }
+    .ov-qr { align-self: center; width: auto; }
   }
 </style>
 </head>
@@ -380,27 +371,29 @@
     <img src="fest-scene.jpg" onerror="this.src='fest-scene.png'; this.onerror=null;"
          alt="GTA International Fest — celebrating cultural diversity" class="poster-img" />
 
-    <!-- Top-center: Volunteer With Us box — near stage, above dancers -->
-    <div class="ov-headline">
-      <div class="title">🎉 Volunteer With Us</div>
-      <div class="date">📅 June 6, 2026 &nbsp;·&nbsp; <span style="color:#ffd166;">3 PM – 9 PM EST</span></div>
-    </div>
+    <!-- Bottom row: Why Volunteer | Volunteer With Us | QR Code -->
+    <div class="poster-bottom">
 
-    <!-- Bottom-left: Why Volunteer (benefits to youth) -->
-    <div class="ov ov-why">
-      <div class="ov-title">Why Volunteer</div>
-      <ul>
-        <li>Earn community-service hours (verified)</li>
-        <li>Build leadership &amp; new friendships</li>
-        <li>Be part of Telangana's biggest GA event</li>
-      </ul>
-    </div>
+      <div class="ov ov-why">
+        <div class="ov-title">Why Volunteer</div>
+        <ul>
+          <li>Earn community-service hours (verified)</li>
+          <li>Build leadership &amp; new friendships</li>
+          <li>Be part of Telangana's biggest GA event</li>
+        </ul>
+      </div>
 
-    <!-- Bottom-right: QR + scan label -->
-    <div class="ov-qr">
-      <div id="qr-img"></div>
-      <div class="scan-hint">📱 Scan to register</div>
-      <span class="url" id="urlDisplay">https://gtafest.github.io/gta-volunteer-fest/</span>
+      <div class="ov ov-headline">
+        <div class="title">🎉 Volunteer With Us</div>
+        <div class="date">📅 June 6, 2026<br><span style="color:#ffd166;">3 PM – 9 PM EST</span></div>
+      </div>
+
+      <div class="ov-qr">
+        <div id="qr-img"></div>
+        <div class="scan-hint">📱 Scan to register</div>
+        <span class="url" id="urlDisplay">https://gtafest.github.io/gta-volunteer-fest/</span>
+      </div>
+
     </div>
   </div>
 
