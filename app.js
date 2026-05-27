@@ -734,6 +734,10 @@ hoursForm.addEventListener('submit', async (e) => {
   payload.submittedAt = new Date().toISOString();
   payload.submittedAtReadable = new Date().toLocaleString();
   payload.receiptId = 'HRS-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+  // Tell the backend "I'll send the PDF certificate in a follow-up call —
+  // please suppress the standalone text confirmation so the volunteer only
+  // gets ONE consolidated email (thank-you + PDF cert + parent CC)."
+  payload._pdfPending = true;
 
   hoursSubmitBtn.disabled = true;
   hoursSubmitBtn.textContent = 'Submitting…';
@@ -765,36 +769,45 @@ hoursForm.addEventListener('submit', async (e) => {
       // Verification metadata from the QR-scan check-in/out flow
       payload.verification = result.verification || null;
 
-      // Generate the personalized certificate PDF and ship its base64 to the
-      // backend so it can be attached to the confirmation email (sent to the
-      // volunteer + CC'd to the parent).
+      // Generate the personalized certificate PDF and ship it to the backend
+      // so it's attached to the CONFIRMATION email (sent to the volunteer +
+      // CC'd to the parent if they entered a parent email). The server has
+      // suppressed its standalone text confirmation (see _pdfPending above)
+      // so this is the ONLY email the volunteer receives — one polished mail
+      // with thank-you + verification details + PDF cert attached.
+      let pdfBase64 = '';
+      let pdfFilename = '';
       try {
         const pdfResult = await generateHoursReceiptPDF(payload);
         if (pdfResult && pdfResult.base64) {
-          // Fire-and-forget: send the certificate as a second backend call so
-          // the success UI doesn't wait on the email round-trip. If this fails,
-          // the volunteer still has the downloaded PDF — they're not blocked.
-          fetchWithRetry(CONFIG.appsScriptUrl, {
-            method: 'POST',
-            mode: 'cors',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'emailCertificate',
-              email: payload.email,
-              lastName: payload.lastName,
-              receiptId: payload.receiptId,
-              pdfFilename: pdfResult.filename,
-              pdfBase64: pdfResult.base64
-            }),
-            keepalive: true
-          }, { maxAttempts: 2, timeoutMs: 30000 }).catch(function(e) {
-            console.warn('Certificate email send failed (volunteer still has PDF):', e);
-          });
+          pdfBase64 = pdfResult.base64;
+          pdfFilename = pdfResult.filename;
         }
       } catch (pdfErr) {
-        console.warn('Certificate PDF generation failed:', pdfErr);
+        console.warn('Certificate PDF generation failed — confirmation email will still send (without attachment):', pdfErr);
       }
+
+      // Always send the confirmation email — even if PDF generation failed,
+      // the backend will send a clean text-only confirmation as a fallback.
+      // Fire-and-forget so the success UI doesn't wait on the email round-trip.
+      fetchWithRetry(CONFIG.appsScriptUrl, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'emailCertificate',
+          email: payload.email,
+          lastName: payload.lastName,
+          receiptId: payload.receiptId,
+          appreciation: payload.appreciation || '',   // AI thank-you text from submitHours
+          pdfFilename: pdfFilename,
+          pdfBase64: pdfBase64                         // empty string if gen failed
+        }),
+        keepalive: true
+      }, { maxAttempts: 2, timeoutMs: 30000 }).catch(function(e) {
+        console.warn('Confirmation email send failed (volunteer still has the downloaded PDF):', e);
+      });
 
       // Build a verification badge for the success screen
       // (small inline HTML-escape so we can safely interpolate into innerHTML)
@@ -809,7 +822,7 @@ hoursForm.addEventListener('submit', async (e) => {
           On-site duration: <strong>${esc(v.verifiedDuration)} hrs</strong>
         </div>`;
       }
-      hoursSuccessMsg.innerHTML = `Thanks${payload.firstName ? ' ' + esc(payload.firstName) : ''}! Your <strong>${esc(payload.hoursCompleted)} hours</strong> have been logged in GTA's records. A confirmation email has been sent to you, and a PDF receipt has been downloaded for your community-service credit.${badge}`;
+      hoursSuccessMsg.innerHTML = `Thanks${payload.firstName ? ' ' + esc(payload.firstName) : ''}! Your <strong>${esc(payload.hoursCompleted)} hours</strong> have been logged in GTA's records. A confirmation email with your personalized GTA certificate attached has been sent to you${payload.parentEmail || payload._isStudent === 'yes' ? ' (and CC\\'d to your parent if you entered a parent email)' : ''}. The PDF was also downloaded to this device for your community-service credit.${badge}`;
       hoursForm.style.display = 'none';
       hoursSuccessScreen.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
