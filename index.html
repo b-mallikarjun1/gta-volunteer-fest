@@ -1054,8 +1054,11 @@
          hidden until the gate succeeds. -->
     <div id="verifyGate">
       <div class="card verify-card">
-        <h2 style="border: none; padding: 0; margin: 0 0 8px;">🔒 Verify Parent's Email to Continue</h2>
-        <p style="margin: 0 0 12px; line-height: 1.55;">Welcome! Before you can register, log volunteer hours, or use the AI assistant, your parent or guardian needs to receive a one-time 6-digit code in their inbox <strong>(also check the spam / junk folder)</strong>. This is a quick check to confirm a parent is in the loop — required because all volunteers are minors.</p>
+        <h2 style="border: none; padding: 0; margin: 0 0 8px;">🔒 Verify Parent's Email to Register</h2>
+        <p style="margin: 0 0 12px; line-height: 1.55;">Welcome! To <strong>register a new volunteer</strong>, your parent or guardian needs to receive a one-time 6-digit code in their inbox <strong>(also check the spam / junk folder)</strong>. This is a quick check to confirm a parent is in the loop — required because all volunteers are minors.</p>
+        <p style="margin: 0 0 12px; padding: 10px 12px; background: #d1fae5; border-left: 3px solid #059669; border-radius: 4px; font-size: 14px; line-height: 1.5; color: #065f46;">
+          ✅ <strong>Already volunteered?</strong> If you registered earlier and were checked in/out by an admin at the event, you can skip this verification — click the <strong>"⏱️ Volunteered Hours"</strong> tab above to log your hours directly.
+        </p>
 
         <!-- Step 1: enter parent email -->
         <div id="verifyStep1">
@@ -1089,8 +1092,12 @@
       </div>
     </div>
 
-    <!-- ============ TABS — hidden until verified ============ -->
-    <div class="tabs" id="appTabs" style="display: none;">
+    <!-- ============ TABS — visible immediately ============
+         The Register tab is OTP-gated (anti-fake-registration).
+         The Hours + Ask-AI tabs are NOT gated — returning volunteers
+         coming back to log their hours don't need to re-verify email
+         because the QR check-in/out flow already authenticates them. -->
+    <div class="tabs" id="appTabs">
       <button class="tab active" id="tabRegister" type="button" onclick="switchView('register')">📝 Register</button>
       <button class="tab" id="tabHours" type="button" onclick="switchView('hours')">⏱️ Volunteered Hours</button>
       <button class="tab" id="tabLearn" type="button" onclick="switchView('learn')">🤖 Ask AI</button>
