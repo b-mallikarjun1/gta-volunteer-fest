@@ -720,14 +720,43 @@ hoursForm.addEventListener('submit', async (e) => {
       payload.firstName = result.firstName || '';
       payload.activityName = result.activityName || '';
       payload.appreciation = result.appreciation || '';
+      // Verification metadata from the QR-scan check-in/out flow
+      payload.verification = result.verification || null;
       generateHoursReceiptPDF(payload);
-      hoursSuccessMsg.textContent = `Thanks${payload.firstName ? ' ' + payload.firstName : ''}! Your ${payload.hoursCompleted} hours have been logged in GTA's records. A confirmation email has been sent to you, and a PDF receipt has been downloaded for your community-service credit.`;
+
+      // Build a verification badge for the success screen
+      // (small inline HTML-escape so we can safely interpolate into innerHTML)
+      const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const v = result.verification;
+      let badge = '';
+      if (v && v.verified) {
+        badge = `<div style="margin-top:12px;padding:12px;background:#d1fae5;border-left:4px solid #059669;border-radius:6px;color:#065f46;font-size:14px">
+          <strong>✓ Verified by GTA event admin</strong><br>
+          Checked in: ${esc(v.checkedInAt)}<br>
+          Checked out: ${esc(v.checkedOutAt)}<br>
+          On-site duration: <strong>${esc(v.verifiedDuration)} hrs</strong>
+        </div>`;
+      }
+      hoursSuccessMsg.innerHTML = `Thanks${payload.firstName ? ' ' + esc(payload.firstName) : ''}! Your <strong>${esc(payload.hoursCompleted)} hours</strong> have been logged in GTA's records. A confirmation email has been sent to you, and a PDF receipt has been downloaded for your community-service credit.${badge}`;
       hoursForm.style.display = 'none';
       hoursSuccessScreen.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      const msg = result.message || "We couldn't find a registration matching that email and last name. Did you register first?";
-      showToast(msg, true);
+      // Specific verification-failure paths (clearer guidance than generic error)
+      if (result.code === 'not_checked_in' || result.code === 'not_checked_out') {
+        showToast(result.message, true);
+        // Highlight the hours field so the user sees the message is about the event flow
+      } else if (result.code === 'over_claimed') {
+        showToast(result.message, true);
+        // Pre-fill the verified duration so the user can correct & resubmit
+        const hoursInput = hoursForm.querySelector('[name="hoursCompleted"]');
+        if (hoursInput && result.verifiedDuration) {
+          hoursInput.value = result.verifiedDuration;
+        }
+      } else {
+        const msg = result.message || "We couldn't find a registration matching that email and last name. Did you register first?";
+        showToast(msg, true);
+      }
     }
   } catch (err) {
     showToast(err.message || 'Could not submit hours. Try again.', true);
@@ -803,6 +832,36 @@ function generateHoursReceiptPDF(d) {
     y += 18;
   }
   y += 10;
+
+  // ----- Verification badge (green if QR-verified, amber if not) -----
+  // This is the key trust signal for the receiving school/teacher reviewing the hours.
+  const ver = d.verification;
+  const isVerified = ver && ver.verified;
+  const badgeText = isVerified ? 'VERIFIED BY GTA EVENT ADMIN' : 'PENDING VERIFICATION';
+  const badgeW = 280, badgeH = 32;
+  const badgeX = (pageWidth - badgeW) / 2;
+  if (isVerified) {
+    doc.setFillColor(209, 250, 229);            // green-100
+    doc.setDrawColor(5, 150, 105);              // emerald-600
+  } else {
+    doc.setFillColor(254, 243, 199);            // amber-100
+    doc.setDrawColor(217, 119, 6);              // amber-600
+  }
+  doc.setLineWidth(1.4);
+  doc.roundedRect(badgeX, y, badgeW, badgeH, 6, 6, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(isVerified ? 6 : 146, isVerified ? 95 : 64, isVerified ? 70 : 14);
+  doc.text(badgeText, pageWidth / 2, y + 20, { align: 'center' });
+  y += badgeH + 8;
+  if (isVerified && ver.checkedInAt && ver.checkedOutAt) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Check-in ${ver.checkedInAt}  →  Check-out ${ver.checkedOutAt}  (${ver.verifiedDuration} hrs on-site)`, pageWidth / 2, y, { align: 'center' });
+    y += 16;
+  }
+  y += 6;
 
   // AI-generated personalized appreciation (centered framed quote)
   if (d.appreciation && d.appreciation.trim()) {

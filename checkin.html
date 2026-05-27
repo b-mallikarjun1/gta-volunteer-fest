@@ -497,8 +497,14 @@
 
   function renderVolunteer(v, token) {
     const area = document.getElementById('volunteerArea');
-    const alreadyIn = !!v.checkedInAt;
-    const cardClass = alreadyIn ? 'checked-in' : (hasMedical(v) ? 'warning' : '');
+    const isIn  = !!v.checkedInAt;
+    const isOut = !!v.checkedOutAt;
+    // State: 'pending' → 'in' → 'out'
+    const state = isOut ? 'out' : (isIn ? 'in' : 'pending');
+    const cardClass = (state === 'out') ? 'checked-in'
+                    : (state === 'in')  ? 'warning'   // amber-ish to draw attention to "needs check-out"
+                    : (hasMedical(v) ? 'warning' : '');
+
     const medicalRow = hasMedical(v) ? `
       <div class="medical">
         <strong>⚠️ Medical info on file:</strong><br>
@@ -507,11 +513,36 @@
         ${v.medications      ? 'Medications: '       + escapeHtml(v.medications)       + '' : ''}
       </div>` : '';
 
+    // Header badge per state
+    const headerBadge =
+        state === 'out' ? '<span class="badge badge-success">✓ Checked out</span>'
+      : state === 'in'  ? '<span class="badge badge-info">Checked in — needs check-out</span>'
+      :                   '<span class="badge badge-info">Not yet checked in</span>';
+
+    // Status rows showing the timeline
+    const statusRows = `
+      ${isIn  ? `<tr><td class="label">Checked IN at</td><td><strong>${escapeHtml(v.checkedInAt)}</strong> by ${escapeHtml(v.checkedInBy || '')}</td></tr>` : ''}
+      ${isOut ? `<tr><td class="label">Checked OUT at</td><td><strong>${escapeHtml(v.checkedOutAt)}</strong> by ${escapeHtml(v.checkedOutBy || '')}</td></tr>` : ''}
+      ${isOut && v.verifiedDuration ? `<tr><td class="label">Verified hours</td><td><strong style="color:#059669">${escapeHtml(String(v.verifiedDuration))} hrs</strong></td></tr>` : ''}
+    `;
+
+    // Action buttons per state
+    let actionBtns;
+    if (state === 'pending') {
+      actionBtns = '<button class="btn-primary" id="confirmBtn" onclick="confirmCheckIn(\'' + token + '\', \'in\')">→ Check IN now</button>' +
+                   '<button class="btn-secondary" onclick="clearVolunteer()">Cancel</button>';
+    } else if (state === 'in') {
+      actionBtns = '<button class="btn-primary" id="confirmBtn" onclick="confirmCheckIn(\'' + token + '\', \'out\')" style="background:#ea580c">← Check OUT now</button>' +
+                   '<button class="btn-secondary" onclick="clearVolunteer()">Cancel</button>';
+    } else {
+      actionBtns = '<button class="btn-secondary" onclick="clearVolunteer()">✓ Done — scan next</button>';
+    }
+
     area.innerHTML = `
       <div class="card volunteer-card ${cardClass}">
         <h2 class="name">
           ${escapeHtml(v.firstName + ' ' + v.lastName)}
-          ${alreadyIn ? '<span class="badge badge-success">Already checked in</span>' : '<span class="badge badge-info">Pending</span>'}
+          ${headerBadge}
         </h2>
         <p class="sub">${escapeHtml(v.schoolName || '—')}${v.gradeLevel ? ' · ' + escapeHtml(v.gradeLevel) : ''}${v.isStudent === 'No' ? ' · Adult volunteer' : ''}</p>
 
@@ -521,16 +552,12 @@
           <tr><td class="label">Parent/guardian</td><td>${escapeHtml(v.parentName || '—')}</td></tr>
           <tr><td class="label">Parent contact</td><td>${escapeHtml(v.parentEmail || '')}<br>${escapeHtml(v.parentPhone || '')}</td></tr>
           <tr><td class="label">Emergency</td><td>${escapeHtml(v.emergencyName || '—')} · ${escapeHtml(v.emergencyPhone || '')}</td></tr>
-          ${alreadyIn ? `<tr><td class="label">Checked in at</td><td><strong>${escapeHtml(v.checkedInAt)}</strong> by ${escapeHtml(v.checkedInBy)}</td></tr>` : ''}
+          ${statusRows}
         </table>
 
         ${medicalRow}
 
-        <div class="actions">
-          ${alreadyIn
-            ? '<button class="btn-secondary" onclick="clearVolunteer()">✓ Done — scan next</button>'
-            : '<button class="btn-primary" id="confirmBtn" onclick="confirmCheckIn(\'' + token + '\')">✓ Confirm Check-in</button><button class="btn-secondary" onclick="clearVolunteer()">Cancel</button>'}
-        </div>
+        <div class="actions">${actionBtns}</div>
       </div>
     `;
   }
@@ -539,33 +566,49 @@
     return (v.allergies || '').trim() || (v.medicalConditions || '').trim() || (v.medications || '').trim();
   }
 
-  async function confirmCheckIn(token) {
+  async function confirmCheckIn(token, mode) {
+    // mode: 'in' for arrival; 'out' for departure
+    mode = (mode === 'out') ? 'out' : 'in';
+    const verb = (mode === 'out') ? 'Checking OUT…' : 'Checking IN…';
     const btn = document.getElementById('confirmBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Confirming…'; }
+    const originalLabel = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = verb; }
     try {
       const res = await callBackend('confirmCheckIn', {
         adminPin: currentPin,
         token: token,
-        adminName: adminName
+        adminName: adminName,
+        mode: mode
       });
       if (res.status !== 'ok') {
         flash(res.message || 'Check-in failed', 'error');
-        if (btn) { btn.disabled = false; btn.textContent = '✓ Confirm Check-in'; }
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
         return;
       }
       const name = (res.firstName + ' ' + res.lastName).trim();
-      if (res.alreadyCheckedIn) {
-        flash('⚠️ ' + name + ' was already checked in at ' + res.checkedInAt, 'warning');
+
+      if (mode === 'in') {
+        if (res.alreadyCheckedIn) {
+          flash('⚠️ ' + name + ' was already checked IN at ' + res.checkedInAt, 'warning');
+        } else {
+          flash('✅ ' + name + ' checked IN successfully!', 'success');
+          recent.unshift({ name: name + ' (IN)', time: res.checkedInAt, by: res.checkedInBy });
+          renderRecent();
+        }
       } else {
-        flash('✅ ' + name + ' checked in successfully!', 'success');
-        recent.unshift({ name: name, time: res.checkedInAt, by: res.checkedInBy });
-        renderRecent();
+        if (res.alreadyCheckedOut) {
+          flash('⚠️ ' + name + ' was already checked OUT at ' + res.checkedOutAt + ' (' + res.verifiedDuration + ' hrs verified)', 'warning');
+        } else {
+          flash('✅ ' + name + ' checked OUT — ' + res.verifiedDuration + ' hrs verified!', 'success');
+          recent.unshift({ name: name + ' (OUT — ' + res.verifiedDuration + 'h)', time: res.checkedOutAt, by: res.checkedOutBy });
+          renderRecent();
+        }
       }
       // Auto-clear card and prepare for next scan
-      setTimeout(clearVolunteer, 1500);
+      setTimeout(clearVolunteer, 1800);
     } catch (err) {
       flash('Network error: ' + err.message, 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '✓ Confirm Check-in'; }
+      if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
     }
   }
 
