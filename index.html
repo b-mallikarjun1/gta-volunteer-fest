@@ -1117,67 +1117,76 @@
         </div>
       </div>
 
-      <!-- ============ SECTION 1: STUDENT INFO ============ -->
+      <!-- ============ SECTION 1: STUDENT (or ADULT) INFO ============
+           The First/Last Name fields stay visible in BOTH modes — adult volunteers
+           still need a real surname so the hours-lookup matches at checkout.
+           Only the truly student-specific fields (DOB/grade/school/studentId/
+           studentEmail/studentPhone) are hidden when adult mode is selected. -->
       <div class="card" id="studentInfoSection">
-        <h2>1. Student Information</h2>
+        <h2 id="section1Title">1. Student Information</h2>
         <div class="row">
           <div class="field">
-            <label for="firstName">First Name<span class="req">*</span></label>
+            <label for="firstName" id="firstNameLabel">First Name<span class="req">*</span></label>
             <input type="text" id="firstName" name="firstName" required autocomplete="given-name" />
           </div>
           <div class="field">
-            <label for="lastName">Last Name<span class="req">*</span></label>
+            <label for="lastName" id="lastNameLabel">Last Name<span class="req">*</span></label>
             <input type="text" id="lastName" name="lastName" required autocomplete="family-name" />
           </div>
         </div>
 
-        <div class="row">
-          <div class="field">
-            <label for="dob">Date of Birth<span class="req">*</span></label>
-            <input type="date" id="dob" name="dob" required />
+        <!-- ↓↓↓ Wrapped so toggleStudentSection() can hide as a unit in adult mode ↓↓↓ -->
+        <div id="studentOnlyFields">
+          <div class="row">
+            <div class="field">
+              <label for="dob">Date of Birth<span class="req">*</span></label>
+              <input type="date" id="dob" name="dob" required />
+            </div>
+            <div class="field">
+              <label for="gradeLevel">Grade Level<span class="req">*</span></label>
+              <select id="gradeLevel" name="gradeLevel" required>
+                <option value="">-- Select grade --</option>
+                <option>6th Grade</option>
+                <option>7th Grade</option>
+                <option>8th Grade</option>
+                <option>9th Grade</option>
+                <option>10th Grade</option>
+                <option>11th Grade</option>
+                <option>12th Grade</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label for="gradeLevel">Grade Level<span class="req">*</span></label>
-            <select id="gradeLevel" name="gradeLevel" required>
-              <option value="">-- Select grade --</option>
-              <option>6th Grade</option>
-              <option>7th Grade</option>
-              <option>8th Grade</option>
-              <option>9th Grade</option>
-              <option>10th Grade</option>
-              <option>11th Grade</option>
-              <option>12th Grade</option>
-            </select>
-          </div>
-        </div>
 
-        <div class="field">
-          <label for="schoolName">School Name<span class="req">*</span></label>
-          <input type="text" id="schoolName" name="schoolName" required />
-        </div>
-
-        <div class="field">
-          <label for="studentId">Student ID <span class="helper" style="font-weight: 400;">(optional)</span></label>
-          <input type="text" id="studentId" name="studentId" placeholder="Leave blank if you don't have it handy" />
-        </div>
-
-        <div class="row">
           <div class="field">
-            <label for="studentEmail">Student Email <span class="helper" style="font-weight: 400;">(optional)</span></label>
-            <input type="email" id="studentEmail" name="studentEmail" autocomplete="email" placeholder="Personal email only (not school)" />
+            <label for="schoolName">School Name<span class="req">*</span></label>
+            <input type="text" id="schoolName" name="schoolName" required />
           </div>
+
           <div class="field">
-            <label for="studentPhone">Student Phone <span class="helper" style="font-weight: 400;">(optional)</span></label>
-            <input type="tel" id="studentPhone" name="studentPhone" autocomplete="tel" placeholder="Optional" />
+            <label for="studentId">Student ID <span class="helper" style="font-weight: 400;">(optional)</span></label>
+            <input type="text" id="studentId" name="studentId" placeholder="Leave blank if you don't have it handy" />
           </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="studentEmail">Student Email <span class="helper" style="font-weight: 400;">(optional)</span></label>
+              <input type="email" id="studentEmail" name="studentEmail" autocomplete="email" placeholder="Personal email only (not school)" />
+            </div>
+            <div class="field">
+              <label for="studentPhone">Student Phone <span class="helper" style="font-weight: 400;">(optional)</span></label>
+              <input type="tel" id="studentPhone" name="studentPhone" autocomplete="tel" placeholder="Optional" />
+            </div>
+          </div>
+          <p class="helper" style="margin-top: -6px;">⚠️ If you fill in Student Email, please use a <strong>personal</strong> account (Gmail, Yahoo, etc.) — school addresses block our messages.</p>
         </div>
-        <p class="helper" style="margin-top: -6px;">⚠️ If you fill in Student Email, please use a <strong>personal</strong> account (Gmail, Yahoo, etc.) — school addresses block our messages.</p>
       </div>
 
       <!-- ============ SECTION 2: PARENT/GUARDIAN OR ADULT CONSENT ============ -->
       <div class="card">
         <h2 id="section2Title">2. Parent / Guardian Consent</h2>
-        <div class="row">
+        <!-- Parent name + relationship — student mode only.
+             Adult mode hides this whole row (the adult's first+last name is collected in Section 1). -->
+        <div class="row" id="parentNameRow">
           <div class="field">
             <label for="parentName" id="parentNameLabel">Parent/Guardian Name<span class="req">*</span></label>
             <input type="text" id="parentName" name="parentName" required />
@@ -1196,11 +1205,11 @@
 
         <div class="row">
           <div class="field">
-            <label for="parentEmail">Parent Email<span class="req">*</span></label>
+            <label for="parentEmail" id="parentEmailLabel">Parent Email<span class="req">*</span></label>
             <input type="email" id="parentEmail" name="parentEmail" required />
           </div>
           <div class="field">
-            <label for="parentPhone">Parent Phone<span class="req">*</span></label>
+            <label for="parentPhone" id="parentPhoneLabel">Parent Phone<span class="req">*</span></label>
             <input type="tel" id="parentPhone" name="parentPhone" required />
           </div>
         </div>

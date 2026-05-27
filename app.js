@@ -277,42 +277,71 @@ function toggleStudentSection() {
   const radio = document.querySelector('input[name="isStudent"]:checked');
   const isStudent = !radio || radio.value === 'yes';
 
-  // ---- Section 1 (Student Information) visibility ----
-  const section1 = document.getElementById('studentInfoSection');
-  if (section1) {
-    section1.style.display = isStudent ? '' : 'none';
-    // When hidden, neutralize required attributes so the form can submit
-    section1.querySelectorAll('input, select, textarea').forEach(el => {
-      if (!isStudent) {
-        if (el.required) {
-          el.dataset._wasRequired = 'true';
-          el.required = false;
+  // Helper: hide/show a wrapper AND toggle the `required` attribute on its inputs
+  // (so the form can submit when the wrapper is hidden). Uses a data-attr to
+  // remember which fields were originally required.
+  function setGroup(el, visible) {
+    if (!el) return;
+    el.style.display = visible ? '' : 'none';
+    el.querySelectorAll('input, select, textarea').forEach((node) => {
+      if (!visible) {
+        if (node.required) {
+          node.dataset._wasRequired = 'true';
+          node.required = false;
         }
-      } else if (el.dataset._wasRequired) {
-        el.required = true;
-        delete el.dataset._wasRequired;
+      } else if (node.dataset._wasRequired) {
+        node.required = true;
+        delete node.dataset._wasRequired;
       }
     });
   }
+
+  // ---- Section 1 title + labels ----
+  // First/Last Name stay visible in BOTH modes (adults need a real surname so
+  // the hours-lookup at checkout can match them). Only the student-specific
+  // fields (DOB, grade, school, student ID, student email/phone) get hidden.
+  const section1Title = document.getElementById('section1Title');
+  if (section1Title) {
+    section1Title.textContent = isStudent ? '1. Student Information' : '1. Your Information';
+  }
+  const firstNameLabel = document.getElementById('firstNameLabel');
+  if (firstNameLabel) {
+    firstNameLabel.innerHTML = isStudent
+      ? 'First Name<span class="req">*</span>'
+      : 'Your First Name<span class="req">*</span>';
+  }
+  const lastNameLabel = document.getElementById('lastNameLabel');
+  if (lastNameLabel) {
+    lastNameLabel.innerHTML = isStudent
+      ? 'Last Name<span class="req">*</span>'
+      : 'Your Last Name<span class="req">*</span>';
+  }
+  // Hide the student-only sub-group (DOB through student phone) in adult mode
+  setGroup(document.getElementById('studentOnlyFields'), isStudent);
 
   // ---- Section 2 title ----
   const section2Title = document.getElementById('section2Title');
   if (section2Title) {
     section2Title.textContent = isStudent
       ? '2. Parent / Guardian Consent'
-      : '2. Adult Volunteer — Information & Consent';
+      : '2. Your Contact & Consent';
   }
 
-  // ---- Relationship field — only relevant for student/parent mode ----
-  const relationshipField = document.getElementById('parentRelationField');
-  if (relationshipField) relationshipField.style.display = isStudent ? '' : 'none';
+  // ---- Parent name row hidden in adult mode (we have first+last from Section 1) ----
+  setGroup(document.getElementById('parentNameRow'), isStudent);
 
-  // ---- Parent name label adapts to context ----
-  const parentNameLabel = document.getElementById('parentNameLabel');
-  if (parentNameLabel) {
-    parentNameLabel.innerHTML = isStudent
-      ? 'Parent/Guardian Name<span class="req">*</span>'
-      : 'Your Full Name<span class="req">*</span>';
+  // ---- Relabel "Parent Email/Phone" to "Your Email/Phone" in adult mode ----
+  const parentEmailLabel = document.getElementById('parentEmailLabel');
+  if (parentEmailLabel) {
+    parentEmailLabel.innerHTML = isStudent
+      ? 'Parent Email<span class="req">*</span>'
+      : 'Your Email<span class="req">*</span>';
+  }
+  const parentPhoneLabel = document.getElementById('parentPhoneLabel');
+  if (parentPhoneLabel) {
+    parentPhoneLabel.innerHTML = isStudent
+      ? 'Parent Phone<span class="req">*</span>'
+      : 'Your Phone<span class="req">*</span>';
   }
 
   // ---- Toggle parent consent vs adult consent ----
@@ -402,6 +431,19 @@ form.addEventListener('submit', async (e) => {
 
   // Note whether section 1 was filled (for the sheet)
   data._isStudent = (document.querySelector('input[name="isStudent"]:checked') || {}).value || 'yes';
+
+  // ADULT MODE: the "Parent/Guardian Name" field is hidden, so its value is
+  // empty. Populate it from the adult's first+last name so the sheet's
+  // Parent/Guardian Name column still reads meaningfully (helps GTA admins
+  // who scan the sheet) — and so any downstream code expecting parentName
+  // doesn't get a blank.
+  if (data._isStudent === 'no') {
+    const fn = (data.firstName || '').trim();
+    const ln = (data.lastName  || '').trim();
+    if (fn || ln) {
+      data.parentName = (fn + ' ' + ln).trim();
+    }
+  }
 
   // Add metadata
   data.submissionId = generateId();
