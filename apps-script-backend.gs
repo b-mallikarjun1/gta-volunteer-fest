@@ -49,7 +49,7 @@ const GTA_CONFIG = {
   contactEmail: 'volunteers@gta.example.org',
 
   // Optional: when known, set this to the actual event date — appears in the email
-  eventDate: 'Saturday, June 6, 2026 (11:00 AM – 8:00 PM EST)',
+  eventDate: 'Saturday, June 6, 2026 (3:00 PM – 9:00 PM EST)',
 
   // Optional: a website link for more info
   eventWebsiteUrl: '',  // e.g., 'https://gta-fest.example.org'
@@ -67,7 +67,14 @@ const GTA_CONFIG = {
   // When true, the form is locked until the parent's email is verified
   // via a 6-digit code. Strongly recommended for COPPA-compliant
   // collection of minors' data.
-  requireEmailVerification: true
+  requireEmailVerification: true,
+
+  // --- Public app URL (used to build the QR-code link) ---
+  // Where checkin.html / index.html are hosted publicly. Must end with a slash.
+  // Example: 'https://gtafest.github.io/volunteer-app/'
+  // If left as a placeholder, the QR will encode just the token (admin can use
+  // the in-app scanner inside checkin.html instead).
+  appBaseUrl: 'https://YOUR-USERNAME.github.io/YOUR-REPO/'
 };
 
 // Header row written automatically the first time data arrives.
@@ -85,17 +92,28 @@ const HEADERS = [
   // ---- Filled in later when the student logs completed hours ----
   'Actual Hours Completed', 'Hours Submitted At', 'Volunteer Notes', 'Hours Receipt ID',
   // ---- Per-row deletion token (used by self-service "delete my registration" link) ----
-  'Deletion Token'
+  'Deletion Token',
+  // ---- Volunteer-type flags (so GTA can filter student vs adult registrations) ----
+  'Is Student?', 'Adult Consent',
+  // ---- Event-day check-in (admin scans the volunteer's QR code at the registration desk) ----
+  'Check-in Token', 'Checked In At', 'Checked In By',
+  // ---- Event-day check-OUT (admin scans the QR again when the volunteer leaves) ----
+  // Verified Duration is the difference between check-in and check-out in hours.
+  // Hours Status is 'Verified' (claimed ≤ verified), 'Over-claimed', or 'Unverified' (no check-in/out).
+  'Checked Out At', 'Checked Out By', 'Verified Duration (hrs)', 'Hours Status'
 ];
 
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    if (data.action === 'sendOtp')     return handleSendOtp(data);
-    if (data.action === 'verifyOtp')   return handleVerifyOtp(data);
-    if (data.action === 'submitHours') return handleHoursSubmission(data);
-    if (data.action === 'getStats')    return handleGetStats(data);
-    if (data.action === 'proxyGroq')   return handleProxyGroq(data);
+    if (data.action === 'sendOtp')          return handleSendOtp(data);
+    if (data.action === 'verifyOtp')        return handleVerifyOtp(data);
+    if (data.action === 'submitHours')      return handleHoursSubmission(data);
+    if (data.action === 'getStats')         return handleGetStats(data);
+    if (data.action === 'proxyGroq')        return handleProxyGroq(data);
+    if (data.action === 'lookupVolunteer')  return handleLookupVolunteer(data);
+    if (data.action === 'confirmCheckIn')   return handleConfirmCheckIn(data);
+    if (data.action === 'emailCertificate') return handleEmailCertificate(data);
     return handleRegistration(data);
   } catch (err) {
     return jsonResponse({ status: 'error', message: err.toString() });
@@ -104,6 +122,15 @@ function doPost(e) {
 
 /* ----------------------- New registration ----------------------- */
 function handleRegistration(data) {
+  // Reject school emails on either field — they block our confirmation mail
+  if (isSchoolEmail(data.studentEmail) || isSchoolEmail(data.parentEmail)) {
+    return jsonResponse({
+      status: 'error',
+      message: SCHOOL_EMAIL_REJECT_MESSAGE,
+      code: 'school_email'
+    });
+  }
+
   // Rate limit: max 5 registrations per email per hour (handles legit retries; blocks spam)
   const emailKey = (data.studentEmail || '') + '|' + (data.parentEmail || '');
   if (!checkRateLimit('reg:' + emailKey, 5, 3600)) {
@@ -135,41 +162,69 @@ function handleRegistration(data) {
   data._deletionToken = deletionToken;
   data._deletionUrl = buildDeletionUrl(deletionToken);
 
-  const row = [
-    data.submittedAtReadable || new Date().toLocaleString(),
-    data.submissionId || '',
-    data.firstName || '',
-    data.lastName || '',
-    data.dob || '',
-    data.gradeLevel || '',
-    data.schoolName || '',
-    data.studentId || '',
-    data.studentEmail || '',
-    data.studentPhone || '',
-    data.parentName || '',
-    data.parentRelation || '',
-    data.parentEmail || '',
-    data.parentPhone || '',
-    data.emergencyName || '',
-    data.emergencyPhone || '',
-    data.parentConsent ? 'YES' : 'NO',
-    data.activityName || '',
-    data.organization || '',
-    data.activityDate || '',
-    data.hours || '',
-    data.supervisorName || '',
-    data.supervisorContact || '',
-    data.description || '',
-    data.allergies || '',
-    data.medicalConditions || '',
-    data.medications || '',
-    // Hours columns — left blank, filled later when student submits hours
-    '', '', '', '',
-    // Deletion token for self-service removal
-    deletionToken
-  ];
+  // Generate a unique check-in token (used at the event-day registration desk)
+  const checkInToken = generateCheckInToken();
+  data._checkInToken = checkInToken;
+  data._checkInQrUrl = buildCheckInQrUrl(checkInToken);
+
+  // Build a column-name → value MAP (not a positional array).
+  // This way the row is always written to the correct column, even if the live
+  // sheet's column order has drifted from the HEADERS array order.
+  const dataMap = {
+    'Submitted At':              data.submittedAtReadable || new Date().toLocaleString(),
+    'Submission ID':             data.submissionId || '',
+    'First Name':                data.firstName || '',
+    'Last Name':                 data.lastName || '',
+    'Date of Birth':             data.dob || '',
+    'Grade Level':               data.gradeLevel || '',
+    'School Name':               data.schoolName || '',
+    'Student ID':                data.studentId || '',
+    'Student Email':             data.studentEmail || '',
+    'Student Phone':             data.studentPhone || '',
+    'Parent/Guardian Name':      data.parentName || '',
+    'Relationship':              data.parentRelation || '',
+    'Parent Email':              data.parentEmail || '',
+    'Parent Phone':              data.parentPhone || '',
+    'Emergency Contact Name':    data.emergencyName || '',
+    'Emergency Contact Phone':   data.emergencyPhone || '',
+    'Parent Consent':            data.parentConsent ? 'YES' : 'NO',
+    'Volunteer Role':            data.activityName || '',
+    'Organization':              data.organization || '',
+    'Activity Date':             data.activityDate || '',
+    'Hours Pledged':             data.hours || '',
+    'Supervisor Name':           data.supervisorName || '',
+    'Supervisor Contact':        data.supervisorContact || '',
+    'Description':               data.description || '',
+    'Allergies':                 data.allergies || '',
+    'Medical Conditions':        data.medicalConditions || '',
+    'Medications':               data.medications || '',
+    'Actual Hours Completed':    '',
+    'Hours Submitted At':        '',
+    'Volunteer Notes':           '',
+    'Hours Receipt ID':          '',
+    'Deletion Token':            deletionToken,
+    'Is Student?':               (data._isStudent === 'no' ? 'No' : 'Yes'),
+    'Adult Consent':             (data.adultConsent ? 'YES' : 'NO'),
+    'Check-in Token':            checkInToken,
+    'Checked In At':             '',
+    'Checked In By':             '',
+    'Checked Out At':            '',
+    'Checked Out By':            '',
+    'Verified Duration (hrs)':   '',
+    'Hours Status':              'Unverified'
+  };
+
+  // Read the SHEET's actual column headers (not HEADERS constant — they may drift)
+  const liveHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const row = liveHeaders.map(function(h) {
+    return dataMap[h] !== undefined ? dataMap[h] : '';
+  });
 
   sheet.appendRow(row);
+
+  // Force the write to commit immediately so other admins viewing the sheet
+  // see the row right away (without waiting for the script to finish).
+  SpreadsheetApp.flush();
 
   // Fire-and-forget email confirmation — don't fail the registration if email fails
   try {
@@ -211,6 +266,10 @@ function handleHoursSubmission(data) {
   const hrsSubmittedAtCol = headers.indexOf('Hours Submitted At');
   const notesCol      = headers.indexOf('Volunteer Notes');
   const receiptIdCol  = headers.indexOf('Hours Receipt ID');
+  const checkedInAtCol  = headers.indexOf('Checked In At');
+  const checkedOutAtCol = headers.indexOf('Checked Out At');
+  const verifiedDurCol  = headers.indexOf('Verified Duration (hrs)');
+  const hoursStatusCol  = headers.indexOf('Hours Status');
 
   if (emailCol < 0 || lastNameCol < 0 || hrsCompletedCol < 0) {
     return jsonResponse({
@@ -239,9 +298,56 @@ function handleHoursSubmission(data) {
     });
   }
 
+  /* ============================================================
+     VERIFICATION GATE — hours must match what the QR scan recorded
+     ============================================================
+     Rules:
+       (a) Volunteer MUST be checked IN by an admin at the event.
+       (b) Volunteer MUST be checked OUT by an admin at the event.
+       (c) Claimed hours must be ≤ verified duration + 0.5h tolerance
+           (small grace so a kid claiming 4h after 3h45m gets through).
+     If any rule fails, reject with a clear error message — the volunteer
+     can resolve it by finding an admin and getting scanned. */
+  const claimedHrs = Number(data.hoursCompleted);
+  if (!claimedHrs || claimedHrs <= 0) {
+    return jsonResponse({ status: 'error', message: 'Please enter a valid number of hours.' });
+  }
+
+  const rowCheckedInAt  = checkedInAtCol  >= 0 ? String(all[matchIdx][checkedInAtCol]  || '').trim() : '';
+  const rowCheckedOutAt = checkedOutAtCol >= 0 ? String(all[matchIdx][checkedOutAtCol] || '').trim() : '';
+  const rowVerifiedDur  = verifiedDurCol  >= 0 ? Number(all[matchIdx][verifiedDurCol]  || 0)  : 0;
+
+  if (!rowCheckedInAt) {
+    return jsonResponse({
+      status: 'error',
+      code: 'not_checked_in',
+      message: "We don't have a record of you checking IN at the event. Please find a GTA admin at the volunteer desk — they'll scan your QR code so your hours can be locked in."
+    });
+  }
+  if (!rowCheckedOutAt) {
+    return jsonResponse({
+      status: 'error',
+      code: 'not_checked_out',
+      message: "We have your check-IN but not your check-OUT. Please find a GTA admin before you leave the event — they'll scan your QR code again so your hours can be verified."
+    });
+  }
+
+  const TOLERANCE_HRS = 0.5; // half-hour grace
+  if (claimedHrs > rowVerifiedDur + TOLERANCE_HRS) {
+    return jsonResponse({
+      status: 'error',
+      code: 'over_claimed',
+      verifiedDuration: rowVerifiedDur,
+      message: `You've entered ${claimedHrs} hours, but our QR scans show you were on-site for ${rowVerifiedDur} hours. Please enter ${rowVerifiedDur} hours (or less). If this is wrong, please contact GTA — we can update the record.`
+    });
+  }
+
   const rowNum = matchIdx + 1; // 1-indexed for getRange
-  sheet.getRange(rowNum, hrsCompletedCol + 1).setValue(Number(data.hoursCompleted) || data.hoursCompleted);
+  sheet.getRange(rowNum, hrsCompletedCol + 1).setValue(claimedHrs);
   sheet.getRange(rowNum, hrsSubmittedAtCol + 1).setValue(data.submittedAtReadable || new Date().toLocaleString());
+  if (hoursStatusCol >= 0) {
+    sheet.getRange(rowNum, hoursStatusCol + 1).setValue('Verified');
+  }
 
   // Append notes; if there are already notes, prepend the new ones
   const existingNotes = String(sheet.getRange(rowNum, notesCol + 1).getValue() || '');
@@ -257,6 +363,7 @@ function handleHoursSubmission(data) {
 
   // Highlight the entire row green so GTA can see at a glance who completed
   sheet.getRange(rowNum, 1, 1, headers.length).setBackground('#d1fae5');
+  SpreadsheetApp.flush(); // Push update so other admins see it immediately
 
   // Build the volunteer record once (used for both AI generation and the email)
   const cParentEmail = headers.indexOf('Parent Email');
@@ -289,7 +396,14 @@ function handleHoursSubmission(data) {
     status: 'ok',
     firstName: all[matchIdx][firstNameCol] || '',
     activityName: all[matchIdx][roleCol] || '',
-    appreciation: appreciation || ''  // client uses this in the certificate PDF
+    appreciation: appreciation || '',  // client uses this in the certificate PDF
+    verification: {
+      verified: true,
+      checkedInAt:  rowCheckedInAt,
+      checkedOutAt: rowCheckedOutAt,
+      verifiedDuration: rowVerifiedDur,
+      claimedHours: claimedHrs
+    }
   });
 }
 
@@ -557,6 +671,10 @@ function handleSendOtp(data) {
   if (!isValidEmailFormat(email)) {
     return jsonResponse({ status: 'error', message: 'Please enter a valid email address.' });
   }
+  // Reject school email addresses — they block our confirmation mail
+  if (isSchoolEmail(email)) {
+    return jsonResponse({ status: 'error', message: SCHOOL_EMAIL_REJECT_MESSAGE, code: 'school_email' });
+  }
   // Rate limit: 3 codes per email per hour
   if (!checkRateLimit('otp-send:' + email, 3, 3600)) {
     return jsonResponse({ status: 'error', message: 'Too many code requests for this email. Try again in an hour.' });
@@ -619,6 +737,40 @@ function isValidEmailFormat(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || ''));
 }
 
+/* ============================================================
+   SCHOOL EMAIL DETECTOR
+   --------------------------------------------------------------
+   Many school districts (Forsyth, Gwinnett, Cobb, Fulton, etc.)
+   filter or block automated mail from outside their domain. Our
+   OTP and confirmation emails get bounced. So we refuse school
+   addresses up front and ask the parent for a personal email
+   (Gmail, Yahoo, iCloud, Outlook personal, etc.) which actually
+   receives our messages reliably.
+   ============================================================ */
+function isSchoolEmail(s) {
+  const e = String(s || '').toLowerCase().trim();
+  if (!e) return false;
+  // Common school email patterns worldwide
+  const schoolPatterns = [
+    /\.edu$/,                     // US universities + many K-12
+    /\.edu\./,                    // .edu.in, .edu.au, .edu.sg, etc.
+    /\.k12\./,                    // US K-12 districts (.k12.ga.us, .k12.fl.us, ...)
+    /\.ac\.[a-z]{2,3}$/,          // Academic (.ac.uk, .ac.in)
+    /\.sch\.[a-z]{2,3}$/,         // School (.sch.uk)
+    /onmicrosoft\.com$/,          // School Microsoft tenants (often blocked — your Forsyth case)
+    /\bforsyth/i,                 // Forsyth County Schools (the user's bounced case)
+    /\bgwinnett/i,                // Gwinnett County Schools
+    /\bcobb\b.*\b(k12|school|edu)/i,
+    /\bfulton\b.*\b(k12|school|edu)/i,
+    /\bfcps/i,                    // Fairfax/Fulton County Public Schools
+    /studentmail\./i              // common student-mail subdomains
+  ];
+  return schoolPatterns.some(function(p) { return p.test(e); });
+}
+
+const SCHOOL_EMAIL_REJECT_MESSAGE =
+  'School email addresses (e.g., .edu, .k12, onmicrosoft.com, district domains) often block our confirmation emails. Please use a personal email instead — Gmail, Yahoo, iCloud, or Outlook personal all work great.';
+
 function buildOtpHtml(code) {
   return '<div style="font-family: Arial, Helvetica, sans-serif; max-width: 460px; margin: 0 auto; background: #ffffff;">' +
     '<div style="background: linear-gradient(135deg, #c1272d, #ff6b35); color: white; padding: 24px; text-align: center;">' +
@@ -663,6 +815,335 @@ function buildOtpPlain(code) {
    ============================================================ */
 function generateDeletionToken() {
   return 'DEL-' + Utilities.getUuid().replace(/-/g, '').substring(0, 16).toUpperCase();
+}
+
+/* ============================================================
+   EVENT-DAY CHECK-IN
+   --------------------------------------------------------------
+   Each registration gets a unique check-in token. A QR encoding
+   that token is embedded in the confirmation email. On event day,
+   the GTA admin opens checkin.html (PIN-protected), scans the
+   volunteer's QR with their phone camera, and confirms check-in.
+   ============================================================ */
+function generateCheckInToken() {
+  return 'CHK-' + Utilities.getUuid().replace(/-/g, '').substring(0, 14).toUpperCase();
+}
+
+function buildCheckInQrUrl(token) {
+  // What the QR ENCODES — preferably a full URL so phone cameras open it directly.
+  // Falls back to just the token if appBaseUrl isn't configured yet.
+  let payload;
+  let baseUrl = String(GTA_CONFIG.appBaseUrl || '').trim();
+  if (baseUrl && baseUrl.indexOf('YOUR-USERNAME') === -1 && baseUrl.indexOf('YOUR-REPO') === -1) {
+    if (baseUrl.charAt(baseUrl.length - 1) !== '/') baseUrl += '/';
+    payload = baseUrl + 'checkin.html?token=' + encodeURIComponent(token);
+  } else {
+    payload = token;
+  }
+  // Free, no-key QR generator service
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&margin=10&data=' + encodeURIComponent(payload);
+}
+
+function handleLookupVolunteer(data) {
+  if (!data.adminPin || data.adminPin !== ADMIN_PIN) {
+    return jsonResponse({ status: 'error', message: 'Invalid admin PIN.' });
+  }
+  const token = String(data.token || '').trim();
+  if (!token) {
+    return jsonResponse({ status: 'error', message: 'Missing check-in token.' });
+  }
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  ensureHeaders(sheet);
+  const all = sheet.getDataRange().getValues();
+  if (all.length < 2) {
+    return jsonResponse({ status: 'error', message: 'No registrations on file yet.' });
+  }
+  const headers = all[0];
+  const tokenCol = headers.indexOf('Check-in Token');
+  if (tokenCol < 0) {
+    return jsonResponse({ status: 'error', message: 'Sheet missing "Check-in Token" column. Redeploy the latest backend.' });
+  }
+
+  let matchIdx = -1;
+  for (let i = 1; i < all.length; i++) {
+    if (String(all[i][tokenCol] || '') === token) { matchIdx = i; break; }
+  }
+  if (matchIdx === -1) {
+    return jsonResponse({ status: 'error', message: 'No registration found for this QR code. Either the QR is invalid, or the registration was deleted.' });
+  }
+
+  const r = all[matchIdx];
+  const get = (name) => {
+    const i = headers.indexOf(name);
+    return i >= 0 ? String(r[i] || '') : '';
+  };
+
+  return jsonResponse({
+    status: 'ok',
+    volunteer: {
+      rowNumber: matchIdx + 1,
+      firstName:    get('First Name'),
+      lastName:     get('Last Name'),
+      isStudent:    get('Is Student?'),
+      gradeLevel:   get('Grade Level'),
+      schoolName:   get('School Name'),
+      role:         get('Volunteer Role'),
+      hoursPledged: get('Hours Pledged'),
+      parentName:   get('Parent/Guardian Name'),
+      parentEmail:  get('Parent Email'),
+      parentPhone:  get('Parent Phone'),
+      emergencyName: get('Emergency Contact Name'),
+      emergencyPhone: get('Emergency Contact Phone'),
+      allergies:    get('Allergies'),
+      medicalConditions: get('Medical Conditions'),
+      medications:  get('Medications'),
+      submittedAt:  get('Submitted At'),
+      submissionId: get('Submission ID'),
+      checkedInAt:  get('Checked In At'),
+      checkedInBy:  get('Checked In By'),
+      checkedOutAt: get('Checked Out At'),
+      checkedOutBy: get('Checked Out By'),
+      verifiedDuration: get('Verified Duration (hrs)'),
+      hoursStatus:  get('Hours Status')
+    }
+  });
+}
+
+function handleConfirmCheckIn(data) {
+  if (!data.adminPin || data.adminPin !== ADMIN_PIN) {
+    return jsonResponse({ status: 'error', message: 'Invalid admin PIN.' });
+  }
+  const token = String(data.token || '').trim();
+  if (!token) {
+    return jsonResponse({ status: 'error', message: 'Missing check-in token.' });
+  }
+  // mode: 'in' (default) for arrival; 'out' for departure
+  const mode = (String(data.mode || 'in').toLowerCase() === 'out') ? 'out' : 'in';
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  ensureHeaders(sheet);
+  const all = sheet.getDataRange().getValues();
+  const headers = all[0];
+  const tokenCol = headers.indexOf('Check-in Token');
+  const checkedInAtCol = headers.indexOf('Checked In At');
+  const checkedInByCol = headers.indexOf('Checked In By');
+  const checkedOutAtCol = headers.indexOf('Checked Out At');
+  const checkedOutByCol = headers.indexOf('Checked Out By');
+  const verifiedDurCol = headers.indexOf('Verified Duration (hrs)');
+  const hoursStatusCol = headers.indexOf('Hours Status');
+  const firstNameCol = headers.indexOf('First Name');
+  const lastNameCol  = headers.indexOf('Last Name');
+
+  if (tokenCol < 0 || checkedInAtCol < 0) {
+    return jsonResponse({ status: 'error', message: 'Sheet missing check-in columns. Redeploy the latest backend.' });
+  }
+  if (mode === 'out' && (checkedOutAtCol < 0 || verifiedDurCol < 0)) {
+    return jsonResponse({ status: 'error', message: 'Sheet missing check-out columns. Redeploy the latest backend so the new columns are added.' });
+  }
+
+  let matchIdx = -1;
+  for (let i = 1; i < all.length; i++) {
+    if (String(all[i][tokenCol] || '') === token) { matchIdx = i; break; }
+  }
+  if (matchIdx === -1) {
+    return jsonResponse({ status: 'error', message: 'No registration found for this QR code.' });
+  }
+
+  const rowNum = matchIdx + 1;
+  const existingCheckIn  = String(all[matchIdx][checkedInAtCol] || '').trim();
+  const existingCheckOut = checkedOutAtCol >= 0 ? String(all[matchIdx][checkedOutAtCol] || '').trim() : '';
+  const adminName = String(data.adminName || 'GTA Admin').trim().substring(0, 60);
+  const now = new Date();
+  const ts  = now.toLocaleString();
+
+  /* ---------- CHECK-IN PATH ---------- */
+  if (mode === 'in') {
+    const alreadyCheckedIn = !!existingCheckIn;
+    if (!alreadyCheckedIn) {
+      sheet.getRange(rowNum, checkedInAtCol + 1).setValue(ts);
+      sheet.getRange(rowNum, checkedInByCol + 1).setValue(adminName);
+      sheet.getRange(rowNum, 1, 1, headers.length).setBackground('#e0f2fe'); // light blue = checked in
+      SpreadsheetApp.flush();
+    }
+    return jsonResponse({
+      status: 'ok',
+      mode: 'in',
+      alreadyCheckedIn: alreadyCheckedIn,
+      checkedInAt: alreadyCheckedIn ? existingCheckIn : ts,
+      checkedInBy: alreadyCheckedIn ? String(all[matchIdx][checkedInByCol] || '') : adminName,
+      checkedOutAt: existingCheckOut,
+      firstName: String(all[matchIdx][firstNameCol] || ''),
+      lastName:  String(all[matchIdx][lastNameCol]  || '')
+    });
+  }
+
+  /* ---------- CHECK-OUT PATH ---------- */
+  // Guard: can't check out if never checked in
+  if (!existingCheckIn) {
+    return jsonResponse({
+      status: 'error',
+      message: 'This volunteer was never checked IN. Please scan their QR for check-IN first before checking them out.'
+    });
+  }
+
+  // Guard: idempotent — if already checked out, return existing values (don't overwrite)
+  if (existingCheckOut) {
+    const existingDur = verifiedDurCol >= 0 ? String(all[matchIdx][verifiedDurCol] || '') : '';
+    return jsonResponse({
+      status: 'ok',
+      mode: 'out',
+      alreadyCheckedOut: true,
+      checkedInAt:  existingCheckIn,
+      checkedInBy:  String(all[matchIdx][checkedInByCol] || ''),
+      checkedOutAt: existingCheckOut,
+      checkedOutBy: String(all[matchIdx][checkedOutByCol] || ''),
+      verifiedDuration: existingDur,
+      firstName: String(all[matchIdx][firstNameCol] || ''),
+      lastName:  String(all[matchIdx][lastNameCol]  || '')
+    });
+  }
+
+  // Compute verified duration in hours (rounded to nearest 0.25h)
+  const inTime = new Date(existingCheckIn);
+  let verifiedHrs = 0;
+  if (!isNaN(inTime.getTime())) {
+    const diffMs = now.getTime() - inTime.getTime();
+    verifiedHrs = Math.round((diffMs / (1000 * 60 * 60)) * 4) / 4; // nearest 0.25
+    if (verifiedHrs < 0) verifiedHrs = 0;
+  }
+
+  sheet.getRange(rowNum, checkedOutAtCol + 1).setValue(ts);
+  sheet.getRange(rowNum, checkedOutByCol + 1).setValue(adminName);
+  sheet.getRange(rowNum, verifiedDurCol + 1).setValue(verifiedHrs);
+  if (hoursStatusCol >= 0) {
+    sheet.getRange(rowNum, hoursStatusCol + 1).setValue('Awaiting hours submission');
+  }
+  // Highlight row green-ish to flag checked-out (will be overwritten by hours submission later)
+  sheet.getRange(rowNum, 1, 1, headers.length).setBackground('#bbf7d0');
+  SpreadsheetApp.flush();
+
+  return jsonResponse({
+    status: 'ok',
+    mode: 'out',
+    alreadyCheckedOut: false,
+    checkedInAt:  existingCheckIn,
+    checkedInBy:  String(all[matchIdx][checkedInByCol] || ''),
+    checkedOutAt: ts,
+    checkedOutBy: adminName,
+    verifiedDuration: verifiedHrs,
+    firstName: String(all[matchIdx][firstNameCol] || ''),
+    lastName:  String(all[matchIdx][lastNameCol]  || '')
+  });
+}
+
+/* ============================================================
+   EMAIL CERTIFICATE — receives a base64 PDF from the client
+   ============================================================
+   After the volunteer submits their hours (and they pass the
+   verification gate), the client renders the personalized GTA
+   certificate and POSTs it here as base64. We look up the row
+   to grab the parent email, then send the certificate to the
+   volunteer with the parent CC'd.
+
+   We deliberately keep this lightweight + idempotent: the
+   volunteer already has a downloaded copy; if the email fails
+   they're not blocked. Errors are logged for the admin to
+   investigate.
+   ============================================================ */
+function handleEmailCertificate(data) {
+  const email = String(data.email || '').toLowerCase().trim();
+  const last  = String(data.lastName || '').toLowerCase().trim();
+  if (!email || !last) {
+    return jsonResponse({ status: 'error', message: 'Missing email or last name.' });
+  }
+  if (!data.pdfBase64) {
+    return jsonResponse({ status: 'error', message: 'Missing PDF certificate.' });
+  }
+  // Rate-limit: max 3 cert emails per volunteer per hour (handles legit retries)
+  if (!checkRateLimit('cert:' + email, 3, 3600)) {
+    return jsonResponse({ status: 'error', message: 'Certificate email rate-limited. Wait a few minutes and try again.' });
+  }
+
+  // Look up the matching row to grab the parent email + name fields
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  ensureHeaders(sheet);
+  const all = sheet.getDataRange().getValues();
+  if (all.length < 2) return jsonResponse({ status: 'error', message: 'No registrations on file.' });
+
+  const headers = all[0];
+  const cEmail  = headers.indexOf('Student Email');
+  const cLast   = headers.indexOf('Last Name');
+  const cFirst  = headers.indexOf('First Name');
+  const cParent = headers.indexOf('Parent Email');
+  const cHours  = headers.indexOf('Actual Hours Completed');
+
+  let matchIdx = -1;
+  for (let i = all.length - 1; i >= 1; i--) {
+    if (String(all[i][cEmail] || '').toLowerCase().trim() === email &&
+        String(all[i][cLast]  || '').toLowerCase().trim() === last) { matchIdx = i; break; }
+  }
+  if (matchIdx === -1) {
+    return jsonResponse({ status: 'error', message: 'No matching registration found.' });
+  }
+
+  const firstName  = String(all[matchIdx][cFirst] || '');
+  const lastName   = String(all[matchIdx][cLast]  || '');
+  const parentEmail = cParent >= 0 ? String(all[matchIdx][cParent] || '').toLowerCase().trim() : '';
+  const hours      = String(all[matchIdx][cHours] || '');
+
+  // Decode the base64 PDF into a Blob attachment
+  let pdfBlob;
+  try {
+    const bytes = Utilities.base64Decode(data.pdfBase64);
+    pdfBlob = Utilities.newBlob(bytes, 'application/pdf', data.pdfFilename || 'GTA_Volunteer_Certificate.pdf');
+  } catch (e) {
+    return jsonResponse({ status: 'error', message: 'Could not decode certificate PDF: ' + e.toString() });
+  }
+
+  // Compose the email
+  const subject = `Your GTA Volunteer Certificate — ${hours} hours · ${firstName} ${lastName}`;
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+  const plainBody =
+    `${greeting}\n\n` +
+    `Thank you for volunteering at the GTA International Fest! Your personalized volunteer certificate ` +
+    `is attached to this email for your records.\n\n` +
+    `Hours verified: ${hours}\n` +
+    `Receipt ID: ${data.receiptId || '—'}\n\n` +
+    `Please show this certificate to your school counselor or community-service coordinator. ` +
+    `If anyone needs to verify the hours, they can contact the Global Telangana Association volunteer coordinator.\n\n` +
+    `Warm regards,\n` +
+    `Global Telangana Association — Atlanta\n` +
+    `www.gtaatlanta.org`;
+  const htmlBody =
+    `<p>${greeting}</p>` +
+    `<p>Thank you for volunteering at the <strong>GTA International Fest</strong>! Your personalized volunteer certificate is attached to this email for your records.</p>` +
+    `<table style="border-collapse:collapse;margin:14px 0">` +
+      `<tr><td style="padding:6px 14px;border:1px solid #e5e7eb;background:#f9fafb"><strong>Hours verified</strong></td><td style="padding:6px 14px;border:1px solid #e5e7eb">${hours}</td></tr>` +
+      `<tr><td style="padding:6px 14px;border:1px solid #e5e7eb;background:#f9fafb"><strong>Receipt ID</strong></td><td style="padding:6px 14px;border:1px solid #e5e7eb">${data.receiptId || '—'}</td></tr>` +
+    `</table>` +
+    `<p>Please show this certificate to your school counselor or community-service coordinator. ` +
+    `If anyone needs to verify the hours, they can contact the Global Telangana Association volunteer coordinator.</p>` +
+    `<p>Warm regards,<br><strong>Global Telangana Association — Atlanta</strong><br>` +
+    `<a href="https://www.gtaatlanta.org">www.gtaatlanta.org</a></p>`;
+
+  const options = {
+    name: 'Global Telangana Association',
+    htmlBody: htmlBody,
+    attachments: [pdfBlob]
+  };
+  if (parentEmail && parentEmail !== email && parentEmail.indexOf('@') > -1) {
+    options.cc = parentEmail;
+  }
+
+  try {
+    MailApp.sendEmail(email, subject, plainBody, options);
+    Logger.log('Cert email sent: to=' + email + ' cc=' + (options.cc || '(none)') + ' quotaRemaining=' + MailApp.getRemainingDailyQuota());
+    return jsonResponse({ status: 'ok', sentTo: email, cc: options.cc || '' });
+  } catch (e) {
+    Logger.log('Cert email failed: ' + e.toString());
+    return jsonResponse({ status: 'error', message: 'Email send failed: ' + e.toString() });
+  }
 }
 
 function buildDeletionUrl(token) {
@@ -777,8 +1258,20 @@ function doGet(e) {
 
 function sendRegistrationEmail(data) {
   if (!GTA_CONFIG.sendConfirmationEmails) return;
-  if (!data || !data.studentEmail) {
-    Logger.log('sendRegistrationEmail called with no data — skipping. (This is normal if you ran it manually from the editor.)');
+  if (!data) {
+    Logger.log('sendRegistrationEmail called with no data — skipping.');
+    return;
+  }
+
+  // Pick the best recipient:
+  //   - Student mode: studentEmail (CC parentEmail)
+  //   - Adult mode:   parentEmail (which is the adult's own verified email; no CC)
+  const studentEmail = String(data.studentEmail || '').toLowerCase().trim();
+  const parentEmail  = String(data.parentEmail  || '').toLowerCase().trim();
+  const primaryEmail = studentEmail || parentEmail;
+
+  if (!primaryEmail || !primaryEmail.includes('@')) {
+    Logger.log('sendRegistrationEmail: no valid recipient — skipping. studentEmail=' + studentEmail + ' parentEmail=' + parentEmail);
     return;
   }
 
@@ -789,22 +1282,45 @@ function sendRegistrationEmail(data) {
   const html = buildRegistrationHtml(data);
   const plain = buildRegistrationPlain(data);
 
+  // Defensive replyTo — skip placeholders that trigger spam filters
+  const reply = String(GTA_CONFIG.contactEmail || '');
+  const replyToVal = (reply && !/example\.|YOUR_|change.?me/i.test(reply)) ? reply : '';
+
   const options = {
     htmlBody: html,
-    name: GTA_CONFIG.senderName,
-    replyTo: GTA_CONFIG.contactEmail || ''
+    name: GTA_CONFIG.senderName || 'GTA Volunteer',
+    replyTo: replyToVal
   };
-  if (data.parentEmail && data.parentEmail !== data.studentEmail) {
-    options.cc = data.parentEmail;
+  // CC the parent email if it's different from the primary
+  if (parentEmail && parentEmail !== primaryEmail && parentEmail.includes('@')) {
+    options.cc = parentEmail;
   }
 
-  MailApp.sendEmail(data.studentEmail, subject, plain, options);
+  Logger.log('sendRegistrationEmail: to=' + primaryEmail + ' cc=' + (options.cc || '(none)') + ' replyTo=' + (replyToVal || '(none)') + ' quotaRemaining=' + MailApp.getRemainingDailyQuota());
+
+  try {
+    MailApp.sendEmail(primaryEmail, subject, plain, options);
+    Logger.log('Registration email sent OK to ' + primaryEmail);
+  } catch (err) {
+    Logger.log('Registration email FAILED: ' + err.toString());
+    throw err;
+  }
 }
 
 function sendHoursConfirmationEmail(data) {
   if (!GTA_CONFIG.sendConfirmationEmails) return;
-  if (!data || !data.studentEmail) {
-    Logger.log('sendHoursConfirmationEmail called with no data — skipping. (This is normal if you ran it manually from the editor.)');
+  if (!data) {
+    Logger.log('sendHoursConfirmationEmail called with no data — skipping.');
+    return;
+  }
+
+  // Same fallback as registration: studentEmail first, then parentEmail (adult mode)
+  const studentEmail = String(data.studentEmail || '').toLowerCase().trim();
+  const parentEmail  = String(data.parentEmail  || '').toLowerCase().trim();
+  const primaryEmail = studentEmail || parentEmail;
+
+  if (!primaryEmail || !primaryEmail.includes('@')) {
+    Logger.log('sendHoursConfirmationEmail: no valid recipient — skipping.');
     return;
   }
 
@@ -813,20 +1329,32 @@ function sendHoursConfirmationEmail(data) {
     data._aiAppreciation = generateAppreciation(data);
   }
 
-  const subject = `Thank you ${data.firstName || ''}! Your ${data.hoursCompleted} volunteer hours have been recorded`;
+  const subject = 'Thank you ' + (data.firstName || '') + '! Your ' + data.hoursCompleted + ' volunteer hours have been recorded';
   const html = buildHoursHtml(data);
   const plain = buildHoursPlain(data);
 
+  // Defensive replyTo
+  const reply = String(GTA_CONFIG.contactEmail || '');
+  const replyToVal = (reply && !/example\.|YOUR_|change.?me/i.test(reply)) ? reply : '';
+
   const options = {
     htmlBody: html,
-    name: GTA_CONFIG.senderName,
-    replyTo: GTA_CONFIG.contactEmail || ''
+    name: GTA_CONFIG.senderName || 'GTA Volunteer',
+    replyTo: replyToVal
   };
-  if (data.parentEmail && data.parentEmail !== data.studentEmail) {
-    options.cc = data.parentEmail;
+  if (parentEmail && parentEmail !== primaryEmail && parentEmail.includes('@')) {
+    options.cc = parentEmail;
   }
 
-  MailApp.sendEmail(data.studentEmail, subject, plain, options);
+  Logger.log('sendHoursConfirmationEmail: to=' + primaryEmail + ' cc=' + (options.cc || '(none)') + ' quotaRemaining=' + MailApp.getRemainingDailyQuota());
+
+  try {
+    MailApp.sendEmail(primaryEmail, subject, plain, options);
+    Logger.log('Hours confirmation email sent OK to ' + primaryEmail);
+  } catch (err) {
+    Logger.log('Hours confirmation email FAILED: ' + err.toString());
+    throw err;
+  }
 }
 
 /* ----------------------- Email templates ----------------------- */
@@ -867,6 +1395,17 @@ function buildRegistrationHtml(d) {
         <tr><td style="padding: 4px 0; color: #6b7280;">Submission ID:</td><td style="padding: 4px 0; font-family: monospace; font-size: 12px;">${escapeHtmlEmail(d.submissionId)}</td></tr>
       </table>
     </div>
+
+    ${d._checkInQrUrl ? `
+    <!-- ============ EVENT-DAY CHECK-IN QR CODE ============ -->
+    <div style="margin: 24px 0; padding: 20px; background: #ffffff; border: 2px dashed #c1272d; border-radius: 10px; text-align: center;">
+      <h3 style="margin: 0 0 8px; font-size: 16px; color: #c1272d;">📱 Your Event-Day Check-in QR Code</h3>
+      <p style="margin: 0 0 12px; font-size: 13px; color: #6b7280; line-height: 1.5;">Show this QR code at the GTA registration desk on event day. An admin will scan it and check you in.</p>
+      <img src="${d._checkInQrUrl}" alt="Check-in QR code" width="200" height="200" style="display: block; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 6px;" />
+      <p style="margin: 12px 0 0; font-family: monospace; font-size: 11px; color: #9ca3af; word-break: break-all;">${escapeHtmlEmail(d._checkInToken)}</p>
+      <p style="margin: 6px 0 0; font-size: 11px; color: #9ca3af;">If the QR doesn't scan, the admin can type this token manually.</p>
+    </div>
+    ` : ''}
 
     <h3 style="margin: 24px 0 8px; font-size: 16px; color: #0a58ca;">What happens next?</h3>
     <ol style="margin: 0 0 20px; padding-left: 20px;">
@@ -909,6 +1448,7 @@ function buildRegistrationPlain(d) {
     `Event date: ${GTA_CONFIG.eventDate}`,
     `Submission ID: ${d.submissionId || ''}`,
     '',
+    d._checkInToken ? `EVENT-DAY CHECK-IN\nYour QR check-in code is included in the HTML version of this email.\nIf needed, your check-in token (admin can type it manually): ${d._checkInToken}\n` : '',
     `WHAT HAPPENS NEXT?`,
     `1) The GTA volunteer coordinator will email you the exact event date, venue, and assigned shift.`,
     `2) Show up on event day — bring water, wear comfortable clothes, be ready to help.`,

@@ -722,7 +722,37 @@ hoursForm.addEventListener('submit', async (e) => {
       payload.appreciation = result.appreciation || '';
       // Verification metadata from the QR-scan check-in/out flow
       payload.verification = result.verification || null;
-      generateHoursReceiptPDF(payload);
+
+      // Generate the personalized certificate PDF and ship its base64 to the
+      // backend so it can be attached to the confirmation email (sent to the
+      // volunteer + CC'd to the parent).
+      try {
+        const pdfResult = await generateHoursReceiptPDF(payload);
+        if (pdfResult && pdfResult.base64) {
+          // Fire-and-forget: send the certificate as a second backend call so
+          // the success UI doesn't wait on the email round-trip. If this fails,
+          // the volunteer still has the downloaded PDF — they're not blocked.
+          fetchWithRetry(CONFIG.appsScriptUrl, {
+            method: 'POST',
+            mode: 'cors',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'emailCertificate',
+              email: payload.email,
+              lastName: payload.lastName,
+              receiptId: payload.receiptId,
+              pdfFilename: pdfResult.filename,
+              pdfBase64: pdfResult.base64
+            }),
+            keepalive: true
+          }, { maxAttempts: 2, timeoutMs: 30000 }).catch(function(e) {
+            console.warn('Certificate email send failed (volunteer still has PDF):', e);
+          });
+        }
+      } catch (pdfErr) {
+        console.warn('Certificate PDF generation failed:', pdfErr);
+      }
 
       // Build a verification badge for the success screen
       // (small inline HTML-escape so we can safely interpolate into innerHTML)
@@ -774,7 +804,114 @@ function resetHoursForm() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ============================================================
+   CERT TEMPLATE LOADER
+   --------------------------------------------------------------
+   We render the official GTA certificate by overlaying the
+   volunteer's name + hours on top of the pre-printed template
+   image (cert-template.png). The image is loaded once on first
+   use and cached as a data URL so it can be embedded in jsPDF
+   AND in the server-side email (via base64 in the payload).
+   If the image can't be loaded (e.g. user hasn't placed
+   cert-template.png in C:\Volforum yet), we fall back to a
+   plain branded receipt so the flow never breaks.
+   ============================================================ */
+let _certTemplateDataUrl = null;
+let _certTemplateDims = null;
+function loadCertTemplate() {
+  if (_certTemplateDataUrl) return Promise.resolve({ dataUrl: _certTemplateDataUrl, dims: _certTemplateDims });
+  return new Promise(function(resolve) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        _certTemplateDataUrl = canvas.toDataURL('image/png');
+        _certTemplateDims = { w: img.naturalWidth, h: img.naturalHeight };
+        resolve({ dataUrl: _certTemplateDataUrl, dims: _certTemplateDims });
+      } catch (e) {
+        // CORS tainted canvas — can't extract; fall back gracefully
+        resolve({ dataUrl: null, dims: null });
+      }
+    };
+    img.onerror = function() { resolve({ dataUrl: null, dims: null }); };
+    img.src = 'cert-template.png';
+  });
+}
+
+// Preload the cert template as soon as the script runs so it's ready by checkout time.
+// Wrapped in try/catch because the file may legitimately not exist on first deploy.
+try { loadCertTemplate(); } catch (e) {}
+
+/**
+ * Generate the personalized PDF certificate.
+ * Returns a Promise resolving to { blob, base64 } so the caller can:
+ *   - trigger a browser download (PDF receipt for the volunteer's school)
+ *   - send the base64 to the backend so it can be emailed as an attachment
+ */
 function generateHoursReceiptPDF(d) {
+  return loadCertTemplate().then(function(tpl) {
+    if (tpl.dataUrl && tpl.dims) {
+      return renderTemplatedCert(d, tpl);
+    }
+    // Fallback: original branded receipt (used until cert-template.png is deployed)
+    return renderFallbackReceipt(d);
+  });
+}
+
+/* ---------- Templated certificate (image background + overlay) ---------- */
+function renderTemplatedCert(d, tpl) {
+  const { jsPDF } = window.jspdf;
+  // Match the cert template's aspect ratio so the image fills the page edge-to-edge
+  const aspectRatio = tpl.dims.w / tpl.dims.h;
+  const pdfWidth = 800;                   // pt
+  const pdfHeight = pdfWidth / aspectRatio;
+  const doc = new jsPDF({
+    unit: 'pt',
+    format: [pdfWidth, pdfHeight],
+    orientation: aspectRatio > 1 ? 'landscape' : 'portrait'
+  });
+
+  // Background = the cert template image
+  doc.addImage(tpl.dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+  // Overlay name on the first blank line ("This is to certify that ___ has completed")
+  // Coordinates are tuned to the template the user provided. If alignment looks off
+  // after a real test, nudge the percent values below.
+  const fullName = ((d.firstName || '') + ' ' + (d.lastName || '')).trim();
+  const hoursStr = String(d.hoursCompleted || '').trim();
+
+  // Name — handwriting-style, centered on the first blank
+  doc.setFont('times', 'italic');
+  doc.setFontSize(22);
+  doc.setTextColor(31, 41, 55);
+  doc.text(fullName, pdfWidth * 0.47, pdfHeight * 0.555, { align: 'center' });
+
+  // Hours — bold large number on the second-line blank, left side
+  doc.setFont('times', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(120, 53, 15);          // dark amber to match the brand
+  doc.text(hoursStr, pdfWidth * 0.14, pdfHeight * 0.655, { align: 'center' });
+
+  // Small footer line: verification metadata (printed below the signatures
+  // area so it doesn't interfere with the cert artwork)
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  const ver = d.verification;
+  const footer = ver && ver.verified
+    ? `Verified by GTA: checked in ${ver.checkedInAt} → checked out ${ver.checkedOutAt} (${ver.verifiedDuration} hrs on-site) · Receipt ID ${d.receiptId}`
+    : `Receipt ID ${d.receiptId} · Issued ${d.submittedAtReadable}`;
+  doc.text(footer, pdfWidth / 2, pdfHeight - 8, { align: 'center' });
+
+  return finalizePdf(doc, d);
+}
+
+/* ---------- Fallback receipt (used when cert-template.png is missing) ---------- */
+function renderFallbackReceipt(d) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -914,8 +1051,26 @@ function generateHoursReceiptPDF(d) {
   doc.text(`records. To verify, contact the Global Telangana Association volunteer coordinator.`, 75, y + 54);
   doc.text(`Receipt ID: ${d.receiptId}`, 75, y + 70);
 
+  return finalizePdf(doc, d);
+}
+
+/* ---------- Shared PDF finalizer: triggers download + returns base64 ---------- */
+function finalizePdf(doc, d) {
   const safeName = (s) => (s || '').replace(/[^a-z0-9]/gi, '');
-  doc.save(`GTA_Volunteer_Hours_${safeName(d.lastName)}_${safeName(d.firstName) || 'Receipt'}.pdf`);
+  const filename = `GTA_Volunteer_Certificate_${safeName(d.lastName)}_${safeName(d.firstName) || 'Receipt'}.pdf`;
+  // Trigger browser download for the volunteer's local copy
+  try { doc.save(filename); } catch (e) { console.warn('PDF download trigger failed:', e); }
+  // Also return the PDF as a base64 string (sans the data-URL prefix) so the
+  // backend can attach it to the confirmation email. jsPDF's datauristring
+  // is the easiest portable way to get this.
+  let base64 = '';
+  try {
+    const dataUri = doc.output('datauristring');
+    base64 = dataUri.split(',')[1] || '';
+  } catch (e) {
+    console.warn('PDF base64 extract failed:', e);
+  }
+  return { filename: filename, base64: base64 };
 }
 
 /* ============================================================
