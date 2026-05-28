@@ -145,27 +145,95 @@ function showToast(msg, isError = false) {
   function showError(msg) {
     verifyError.textContent = msg || '';
     verifyError.style.display = msg ? 'block' : 'none';
+    if (msg) {
+      // Style it big + red + scroll into view so the user can't miss it
+      verifyError.style.background = '#fee2e2';
+      verifyError.style.color = '#991b1b';
+      verifyError.style.border = '2px solid #dc2626';
+      verifyError.style.borderRadius = '8px';
+      verifyError.style.padding = '14px 16px';
+      verifyError.style.marginTop = '14px';
+      verifyError.style.fontWeight = '600';
+      verifyError.style.fontSize = '14px';
+      verifyError.style.lineHeight = '1.5';
+      // Scroll to it on a short delay so the layout settles first
+      setTimeout(function() {
+        try { verifyError.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+      }, 80);
+      console.error('[GTA] showError:', msg);
+    }
   }
 
   async function callBackend(action, payload) {
+    // Defensive: bail loudly if config is missing/placeholder rather than
+    // silently sending a request that will never resolve.
+    if (!CONFIG || !CONFIG.appsScriptUrl) {
+      throw new Error('Backend not configured. config.js is missing CONFIG.appsScriptUrl. Tell the GTA admin.');
+    }
+    if (CONFIG.appsScriptUrl.includes('YOUR_APPS_SCRIPT_URL') || CONFIG.appsScriptUrl.includes('PLACEHOLDER')) {
+      throw new Error('Backend URL is still a placeholder in config.js. Replace it with the deployed /exec URL.');
+    }
+    if (!/script\.google\.com\/macros\/s\/[^/]+\/exec/.test(CONFIG.appsScriptUrl)) {
+      console.warn('[GTA] appsScriptUrl looks unusual:', CONFIG.appsScriptUrl);
+    }
+
+    console.log('[GTA] callBackend → action=' + action + ' url=' + CONFIG.appsScriptUrl);
+    const startTs = Date.now();
     const res = await fetchWithRetry(CONFIG.appsScriptUrl, {
       method: 'POST', mode: 'cors', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action }, payload)),
-      keepalive: true   // mobile: complete OTP request even if app backgrounds
+      keepalive: true
     }, { maxAttempts: 3, timeoutMs: 25000 });
-    if (!res.ok) throw new Error('Network error (' + res.status + ')');
-    return res.json();
+
+    console.log('[GTA] callBackend ← status=' + res.status + ' ok=' + res.ok + ' time=' + (Date.now() - startTs) + 'ms');
+
+    // Read the body ONCE as text, then try to JSON-parse it. If parsing fails,
+    // it means the script returned HTML (typically the Google sign-in page —
+    // happens when "Who has access" is NOT set to "Anyone" in deployment).
+    const text = await res.text();
+    if (!res.ok) {
+      console.error('[GTA] non-2xx response:', text.substring(0, 300));
+      throw new Error('Backend returned HTTP ' + res.status + '. Check Apps Script Executions tab for details.');
+    }
+    if (!text || text.trim().length === 0) {
+      console.error('[GTA] empty response body');
+      throw new Error('Backend returned an empty response. This usually means the Apps Script deployment is broken — redeploy it as a New version.');
+    }
+    if (text.trim().charAt(0) === '<') {
+      console.error('[GTA] HTML response (first 300 chars):', text.substring(0, 300));
+      throw new Error(
+        'The backend returned a login page instead of data. ' +
+        'Fix: open Apps Script → Deploy → Manage deployments → ✏️ Edit → set "Who has access" to **Anyone** → New version. ' +
+        '(Right now it is probably set to "Anyone with Google account" or "Only myself", which blocks unauthenticated browser requests.)'
+      );
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('[GTA] JSON parse failed. Raw response:', text.substring(0, 300));
+      throw new Error('Backend response was not JSON. Raw: ' + text.substring(0, 120));
+    }
   }
 
   async function sendCode(email) {
     showError('');
     sendOtpBtn.disabled = true;
     sendOtpBtn.textContent = 'Sending…';
+    console.log('[GTA] sendCode start for ' + email);
+    // Safety timeout: if nothing comes back in 30s, surface a clear error
+    // instead of leaving the button hanging on "Sending…" forever.
+    const safetyTimer = setTimeout(function() {
+      console.error('[GTA] sendCode safety timeout — no response after 30s');
+      showError('Still waiting on the backend after 30 seconds. The Apps Script is probably cold-starting (try once more) OR the deployment URL in config.js is wrong. Open browser console for details.');
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send verification code';
+    }, 30000);
     try {
       const data = await callBackend('sendOtp', { email: email });
-      if (data.status !== 'ok') {
-        showError(data.message || 'Could not send code.');
+      console.log('[GTA] sendCode response:', data);
+      if (!data || data.status !== 'ok') {
+        showError((data && data.message) || 'Could not send code. The backend responded but did not say "ok". Check Apps Script Executions.');
         return false;
       }
       verifyEmailDisp.textContent = email;
@@ -174,9 +242,12 @@ function showToast(msg, isError = false) {
       otpInput.focus();
       return true;
     } catch (err) {
-      showError('Network error. Please try again.');
+      console.error('[GTA] sendCode error:', err);
+      // Surface the *actual* error message — no more generic "Network error."
+      showError(err.message || ('Unexpected error: ' + String(err)));
       return false;
     } finally {
+      clearTimeout(safetyTimer);
       sendOtpBtn.disabled = false;
       sendOtpBtn.textContent = 'Send verification code';
     }
@@ -375,8 +446,32 @@ function switchView(view) {
     hours:    document.getElementById('tabHours'),
     learn:    document.getElementById('tabLearn')
   };
+  // OTP gate is shown ONLY on the Register tab and ONLY when the user hasn't
+  // already verified a parent email this session. The Hours + Ask-AI tabs are
+  // freely accessible — security on Hours is enforced by the QR-scan flow
+  // (admin must scan IN + OUT before backend will accept hours).
+  const verifyGate = document.getElementById('verifyGate');
+  const isVerified = !!sessionStorage.getItem('gtaVerifiedToken');
+  if (verifyGate) {
+    if (view === 'register' && !isVerified) {
+      verifyGate.style.display = '';
+      // Also hide the register form behind the gate (it's already display:none
+      // but we re-apply just in case showForm() ran earlier and made it visible)
+    } else {
+      verifyGate.style.display = 'none';
+    }
+  }
+
   Object.keys(views).forEach((key) => {
-    if (views[key]) views[key].style.display = (key === view) ? 'block' : 'none';
+    if (views[key]) {
+      // The Register view stays hidden until the OTP gate is passed —
+      // showForm() reveals it. For Hours + Learn, just show normally.
+      if (key === 'register') {
+        views[key].style.display = (key === view && isVerified) ? 'block' : 'none';
+      } else {
+        views[key].style.display = (key === view) ? 'block' : 'none';
+      }
+    }
     if (tabs[key])  tabs[key].classList.toggle('active', key === view);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
