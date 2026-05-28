@@ -1058,17 +1058,21 @@ function renderTemplatedCert(d, tpl) {
   const fullName = ((d.firstName || '') + ' ' + (d.lastName || '')).trim();
   const hoursStr = String(d.hoursCompleted || '').trim();
 
-  // Name — handwriting-style, centered on the first blank
+  // Name — handwriting-style, centered on the first blank.
+  // Lifted ~1% like the hours number so the text floats above the underline.
   doc.setFont('times', 'italic');
   doc.setFontSize(22);
   doc.setTextColor(31, 41, 55);
-  doc.text(fullName, pdfWidth * 0.47, pdfHeight * 0.555, { align: 'center' });
+  doc.text(fullName, pdfWidth * 0.47, pdfHeight * 0.545, { align: 'center' });
 
-  // Hours — bold large number on the second-line blank, left side
+  // Hours — bold large number, lifted slightly above the underline so the
+  // digits float on top of the blank line (with breathing room) instead of
+  // resting their baseline on the underline itself.
+  // Tune: lower the second %-multiplier to lift the number higher.
   doc.setFont('times', 'bold');
   doc.setFontSize(22);
   doc.setTextColor(120, 53, 15);          // dark amber to match the brand
-  doc.text(hoursStr, pdfWidth * 0.14, pdfHeight * 0.655, { align: 'center' });
+  doc.text(hoursStr, pdfWidth * 0.14, pdfHeight * 0.640, { align: 'center' });
 
   // Small footer line: verification metadata (printed below the signatures
   // area so it doesn't interfere with the cert artwork)
