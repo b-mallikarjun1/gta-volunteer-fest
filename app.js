@@ -436,46 +436,69 @@ function toggleStudentSection() {
 
 /* ----------------------- Tab switching ----------------------- */
 function switchView(view) {
-  const views = {
-    register: document.getElementById('registerView'),
-    hours:    document.getElementById('hoursView'),
-    learn:    document.getElementById('learnView')
-  };
-  const tabs = {
-    register: document.getElementById('tabRegister'),
-    hours:    document.getElementById('tabHours'),
-    learn:    document.getElementById('tabLearn')
-  };
-  // OTP gate is shown ONLY on the Register tab and ONLY when the user hasn't
-  // already verified a parent email this session. The Hours + Ask-AI tabs are
-  // freely accessible — security on Hours is enforced by the QR-scan flow
-  // (admin must scan IN + OUT before backend will accept hours).
-  const verifyGate = document.getElementById('verifyGate');
-  const isVerified = !!sessionStorage.getItem('gtaVerifiedToken');
-  if (verifyGate) {
-    if (view === 'register' && !isVerified) {
-      verifyGate.style.display = '';
-      // Also hide the register form behind the gate (it's already display:none
-      // but we re-apply just in case showForm() ran earlier and made it visible)
-    } else {
-      verifyGate.style.display = 'none';
-    }
-  }
+  console.log('[GTA] switchView(' + view + ') called');
+  try {
+    const views = {
+      register: document.getElementById('registerView'),
+      hours:    document.getElementById('hoursView'),
+      learn:    document.getElementById('learnView')
+    };
+    const tabs = {
+      register: document.getElementById('tabRegister'),
+      hours:    document.getElementById('tabHours'),
+      learn:    document.getElementById('tabLearn')
+    };
+    const verifyGate = document.getElementById('verifyGate');
+    const isVerified = !!sessionStorage.getItem('gtaVerifiedToken');
+    console.log('[GTA] switchView isVerified=' + isVerified);
 
-  Object.keys(views).forEach((key) => {
-    if (views[key]) {
-      // The Register view stays hidden until the OTP gate is passed —
-      // showForm() reveals it. For Hours + Learn, just show normally.
-      if (key === 'register') {
-        views[key].style.display = (key === view && isVerified) ? 'block' : 'none';
-      } else {
-        views[key].style.display = (key === view) ? 'block' : 'none';
-      }
+    // Gate is shown ONLY on Register tab when not verified. Hours + AI are open.
+    if (verifyGate) {
+      verifyGate.style.display = (view === 'register' && !isVerified) ? '' : 'none';
     }
-    if (tabs[key])  tabs[key].classList.toggle('active', key === view);
-  });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    Object.keys(views).forEach(function(key) {
+      const el = views[key];
+      if (el) {
+        let shouldShow;
+        if (key === 'register') {
+          // Register view requires verification; hide otherwise.
+          shouldShow = (key === view) && isVerified;
+        } else {
+          // Hours + Learn views are always available.
+          shouldShow = (key === view);
+        }
+        el.style.display = shouldShow ? 'block' : 'none';
+      }
+      if (tabs[key]) tabs[key].classList.toggle('active', key === view);
+    });
+
+    // If user clicked Register while not verified, the register view stays
+    // hidden but the gate appears. Make sure the gate scrolls into view so the
+    // user understands why nothing rendered.
+    if (view === 'register' && !isVerified && verifyGate) {
+      try { verifyGate.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  } catch (err) {
+    // Last-resort: surface the error on-page since mobile users have no console
+    console.error('[GTA] switchView FAILED:', err);
+    try {
+      let banner = document.getElementById('switchViewError');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'switchViewError';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fee2e2;color:#991b1b;padding:12px;font-size:13px;border-bottom:2px solid #dc2626;z-index:99999;text-align:center;font-weight:600';
+        document.body.appendChild(banner);
+      }
+      banner.textContent = 'Tab switch failed: ' + (err && err.message ? err.message : String(err));
+    } catch (e) {}
+  }
 }
+// Expose globally so the inline onclick="switchView('hours')" handlers in
+// index.html can find it even if app.js is loaded inside a module scope.
+window.switchView = switchView;
 
 /* ----------------------- "Other" role toggle ----------------------- */
 function toggleOtherRole() {
@@ -917,7 +940,8 @@ hoursForm.addEventListener('submit', async (e) => {
           On-site duration: <strong>${esc(v.verifiedDuration)} hrs</strong>
         </div>`;
       }
-      hoursSuccessMsg.innerHTML = `Thanks${payload.firstName ? ' ' + esc(payload.firstName) : ''}! Your <strong>${esc(payload.hoursCompleted)} hours</strong> have been logged in GTA's records. A confirmation email with your personalized GTA certificate attached has been sent to you${payload.parentEmail || payload._isStudent === 'yes' ? ' (and CC\\'d to your parent if you entered a parent email)' : ''}. The PDF was also downloaded to this device for your community-service credit.${badge}`;
+      const ccNote = (payload.parentEmail || payload._isStudent === 'yes') ? " (and CC'd to your parent if you entered a parent email)" : "";
+      hoursSuccessMsg.innerHTML = `Thanks${payload.firstName ? ' ' + esc(payload.firstName) : ''}! Your <strong>${esc(payload.hoursCompleted)} hours</strong> have been logged in GTA's records. A confirmation email with your personalized GTA certificate attached has been sent to you${ccNote}. The PDF was also downloaded to this device for your community-service credit.${badge}`;
       hoursForm.style.display = 'none';
       hoursSuccessScreen.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
