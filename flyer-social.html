@@ -77,11 +77,13 @@
   }
   .youth-strip .sep { color: #ffd166; margin: 0 4px; }
 
-  /* (4) POSTER — festival photo backdrop + overlays */
+  /* (4) POSTER — festival photo backdrop + overlays
+     Sized so the total of torana(18) + banner(140) + youth-strip(70) +
+     poster(1052) + footer(70) = 1350px (Instagram portrait) */
   .poster {
     position: relative;
     width: 100%;
-    height: 1072px;
+    height: 1052px;
     background-color: #fdf6e3;
     background-image:
       url('fest-scene.jpg'),
@@ -162,8 +164,9 @@
     color: #ffd166; line-height: 1; margin-bottom: 3px;
     white-space: nowrap;
   }
-  .ov-headline .date { font-size: 9px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
-  .ov-headline .time { font-size: 8px; color: #ffd166; margin-top: 3px; white-space: nowrap; }
+  .ov-headline .date  { font-size: 9px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .ov-headline .time  { font-size: 8px; color: #ffd166; margin-top: 3px; white-space: nowrap; }
+  .ov-headline .venue { font-size: 8px; color: #fff; margin-top: 3px; white-space: nowrap; font-weight: 600; }
 
   /* QR Code */
   .ov-qr {
@@ -209,13 +212,13 @@
     .ov-why { max-width: 100%; }
     .ov-why li { font-size: 11px; }
     .ov-headline .title { font-size: 12px; }
-    .ov-headline .date, .ov-headline .time { font-size: 10px; }
+    .ov-headline .date, .ov-headline .time, .ov-headline .venue { font-size: 10px; }
     .ov-qr { align-self: center; width: auto; }
   }
 
-  /* (5) Footer — 50px */
+  /* (5) Footer — 70px (taller to fit contact email line) */
   .footer {
-    height: 50px;
+    height: 70px;
     background: #7a0c16;
     color: #fff;
     text-align: center;
@@ -232,6 +235,14 @@
     font-size: 10px;
     margin-bottom: 2px;
   }
+  .footer .contact {
+    display: block;
+    color: #ffd166;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  .footer .contact a { color: #ffd166; text-decoration: none; }
 
 
   @media print {
@@ -271,6 +282,7 @@
         <ul>
           <li>Earn community-service hours (verified)</li>
           <li>Build leadership &amp; friendships</li>
+          <li>Adults: meet neighbors, grow your social circle</li>
           <li>Telangana's biggest GA event</li>
         </ul>
       </div>
@@ -279,6 +291,7 @@
         <div class="title">&#127881; Volunteer With Us</div>
         <div class="date">&#128197; June 6, 2026</div>
         <div class="time">3 PM &ndash; 9 PM EST</div>
+        <div class="venue">&#128205; Fowler Park, Cumming GA</div>
       </div>
 
       <div class="ov-qr">
@@ -295,6 +308,7 @@
   <div class="footer">
     <span class="stars">&#10022; &#10022; &#10022; &#10022; &#10022;</span>
     <strong>Global Telangana Association</strong> &middot; Atlanta, GA &middot; <strong>@gtaatlanta</strong> &middot; <strong>www.gtaatlanta.org</strong>
+    <span class="contact">&#9993;&#65039; Questions? <a href="mailto:gtaadmin2026@gmail.com">gtaadmin2026@gmail.com</a></span>
   </div>
 
 </div>
